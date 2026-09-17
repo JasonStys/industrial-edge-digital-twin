@@ -253,20 +253,19 @@ with `pnpm symbols`; CI rejects stale output.
 
 ### `gateway/test/server.test.ts`
 
-- `TelemetryPublisher` — [line 12](../../gateway/test/server.test.ts#L12)
-- `config` — [line 15](../../gateway/test/server.test.ts#L15)
-- `FakePublisher` — [line 24](../../gateway/test/server.test.ts#L24)
-- `response` — [line 50](../../gateway/test/server.test.ts#L50)
-- `engine` — [line 61](../../gateway/test/server.test.ts#L61)
-- `available` — [line 72](../../gateway/test/server.test.ts#L72)
-- `unavailable` — [line 77](../../gateway/test/server.test.ts#L77)
-- `unauthorized` — [line 84](../../gateway/test/server.test.ts#L84)
-- `wrongToken` — [line 92](../../gateway/test/server.test.ts#L92)
-- `malformed` — [line 100](../../gateway/test/server.test.ts#L100)
-- `rejected` — [line 135](../../gateway/test/server.test.ts#L135)
-- `opaqueFailure` — [line 154](../../gateway/test/server.test.ts#L154)
-- `publisher` — [line 166](../../gateway/test/server.test.ts#L166)
-- `staticRoot` — [line 173](../../gateway/test/server.test.ts#L173)
+- `TelemetryPublisher` — [line 14](../../gateway/test/server.test.ts#L14)
+- `config` — [line 17](../../gateway/test/server.test.ts#L17)
+- `FakePublisher` — [line 26](../../gateway/test/server.test.ts#L26)
+- `response` — [line 57](../../gateway/test/server.test.ts#L57)
+- `engine` — [line 68](../../gateway/test/server.test.ts#L68)
+- `available` — [line 79](../../gateway/test/server.test.ts#L79)
+- `unavailable` — [line 84](../../gateway/test/server.test.ts#L84)
+- `unauthorized` — [line 91](../../gateway/test/server.test.ts#L91)
+- `wrongToken` — [line 99](../../gateway/test/server.test.ts#L99)
+- `malformed` — [line 107](../../gateway/test/server.test.ts#L107)
+- `rejected` — [line 142](../../gateway/test/server.test.ts#L142)
+- `opaqueFailure` — [line 161](../../gateway/test/server.test.ts#L161)
+- `publisher` — [line 173](../../gateway/test/server.test.ts#L173)
 
 ### `hmi/src/app.ts`
 
