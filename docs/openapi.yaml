@@ -1,0 +1,307 @@
+openapi: 3.1.0
+info:
+  title: Harbor Twin Gateway API
+  version: 1.0.0
+  description: Read-only telemetry and authenticated commands for a synthetic heated-tank twin.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Loopback demonstration
+tags:
+  - name: telemetry
+  - name: commands
+paths:
+  /api/v1/health:
+    get:
+      tags: [telemetry]
+      summary: Read gateway dependency health
+      operationId: getHealth
+      responses:
+        "200":
+          description: Engine is running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: Engine is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /api/v1/state:
+    get:
+      tags: [telemetry]
+      summary: Read the newest validated snapshot
+      operationId: getState
+      responses:
+        "200":
+          description: Current state
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [snapshot]
+                properties:
+                  snapshot:
+                    $ref: "#/components/schemas/Snapshot"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+  /api/v1/events:
+    get:
+      tags: [telemetry]
+      summary: Stream named telemetry events
+      operationId: streamState
+      responses:
+        "200":
+          description: Server-Sent Events stream; data is a Snapshot JSON object
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "503":
+          $ref: "#/components/responses/Unavailable"
+  /api/v1/commands:
+    post:
+      tags: [commands]
+      summary: Submit one retry-safe bounded command
+      operationId: submitCommand
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Command"
+      responses:
+        "200":
+          description: Command accepted or duplicate accepted result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Engine rejected a validly shaped command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResponse"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    BadRequest:
+      description: Request failed schema validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Bearer token is missing or invalid
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unavailable:
+      description: Engine or stream capacity is unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, status, title, detail]
+      properties:
+        type: { type: string }
+        status: { type: integer }
+        title: { type: string }
+        detail: { type: string }
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status, engine, mqtt]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        engine:
+          type: object
+          additionalProperties: false
+          required: [running, droppedTicks]
+          properties:
+            running: { type: boolean }
+            droppedTicks: { type: integer, minimum: 0 }
+        mqtt:
+          type: object
+          additionalProperties: false
+          required: [enabled, connected, replacedMessages]
+          properties:
+            enabled: { type: boolean }
+            connected: { type: boolean }
+            replacedMessages: { type: integer, minimum: 0 }
+    CommandId:
+      type: string
+      pattern: "^[A-Za-z0-9_-]{1,64}$"
+    Command:
+      oneOf:
+        - $ref: "#/components/schemas/SetMode"
+        - $ref: "#/components/schemas/SetTarget"
+        - $ref: "#/components/schemas/SetOutput"
+        - $ref: "#/components/schemas/InjectFault"
+        - $ref: "#/components/schemas/ClearFaults"
+      discriminator:
+        propertyName: type
+    SetMode:
+      type: object
+      additionalProperties: false
+      required: [commandId, type, mode]
+      properties:
+        commandId: { $ref: "#/components/schemas/CommandId" }
+        type: { const: setMode }
+        mode: { type: string, enum: [stopped, manual, automatic] }
+    SetTarget:
+      type: object
+      additionalProperties: false
+      required: [commandId, type, field, value]
+      properties:
+        commandId: { $ref: "#/components/schemas/CommandId" }
+        type: { const: setTarget }
+        field: { type: string, enum: [level_l, temperature_c] }
+        value: { type: number }
+    SetOutput:
+      type: object
+      additionalProperties: false
+      required: [commandId, type, field, value]
+      properties:
+        commandId: { $ref: "#/components/schemas/CommandId" }
+        type: { const: setOutput }
+        field: { type: string, enum: [pump_pct, outlet_valve_pct, heater_pct] }
+        value: { type: number, minimum: 0, maximum: 100 }
+    InjectFault:
+      type: object
+      additionalProperties: false
+      required: [commandId, type, fault, enabled]
+      properties:
+        commandId: { $ref: "#/components/schemas/CommandId" }
+        type: { const: injectFault }
+        fault:
+          type: string
+          enum: [freeze_level_sensor, level_sensor_out_of_range, pump_stuck_on, heater_stuck_on]
+        enabled: { type: boolean }
+    ClearFaults:
+      type: object
+      additionalProperties: false
+      required: [commandId, type]
+      properties:
+        commandId: { $ref: "#/components/schemas/CommandId" }
+        type: { const: clearFaults }
+    CommandResult:
+      type: object
+      additionalProperties: false
+      required: [accepted, duplicate, command_id, code, message]
+      properties:
+        accepted: { type: boolean }
+        duplicate: { type: boolean }
+        command_id: { type: string }
+        code: { type: string }
+        message: { type: string }
+    CommandResponse:
+      type: object
+      additionalProperties: false
+      required: [result]
+      properties:
+        result: { $ref: "#/components/schemas/CommandResult" }
+        snapshot: { $ref: "#/components/schemas/Snapshot" }
+    Signal:
+      type: object
+      additionalProperties: false
+      required: [value, source_time_s, quality]
+      properties:
+        value: { type: number }
+        source_time_s: { type: number, minimum: 0 }
+        quality: { type: string, enum: [good, stale, bad, out_of_range] }
+    Actuators:
+      type: object
+      additionalProperties: false
+      required: [pump_pct, outlet_valve_pct, heater_pct]
+      properties:
+        pump_pct: { type: number, minimum: 0, maximum: 100 }
+        outlet_valve_pct: { type: number, minimum: 0, maximum: 100 }
+        heater_pct: { type: number, minimum: 0, maximum: 100 }
+    Snapshot:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          sequence,
+          simulation_time_s,
+          mode,
+          controller_state,
+          plant,
+          signals,
+          requested,
+          actual,
+          targets,
+          faults,
+          alarms,
+        ]
+      properties:
+        sequence: { type: integer, minimum: 0 }
+        simulation_time_s: { type: number, minimum: 0 }
+        mode: { type: string, enum: [stopped, manual, automatic] }
+        controller_state: { type: string, enum: [idle, starting, running, faulted, safe_shutdown] }
+        plant:
+          type: object
+          additionalProperties: false
+          required: [level_l, temperature_c]
+          properties:
+            level_l: { type: number, minimum: 0, maximum: 1000 }
+            temperature_c: { type: number, minimum: -10, maximum: 120 }
+        signals:
+          type: object
+          additionalProperties: false
+          required: [level, temperature]
+          properties:
+            level: { $ref: "#/components/schemas/Signal" }
+            temperature: { $ref: "#/components/schemas/Signal" }
+        requested: { $ref: "#/components/schemas/Actuators" }
+        actual: { $ref: "#/components/schemas/Actuators" }
+        targets:
+          type: object
+          additionalProperties: false
+          required: [level_l, temperature_c]
+          properties:
+            level_l: { type: number, minimum: 50, maximum: 950 }
+            temperature_c: { type: number, minimum: 5, maximum: 95 }
+        faults:
+          type: object
+          additionalProperties: false
+          required: [freeze_level_sensor, level_sensor_out_of_range, pump_stuck_on, heater_stuck_on]
+          properties:
+            freeze_level_sensor: { type: boolean }
+            level_sensor_out_of_range: { type: boolean }
+            pump_stuck_on: { type: boolean }
+            heater_stuck_on: { type: boolean }
+        alarms:
+          type: object
+          additionalProperties: false
+          required: [low_level, high_level, sensor_fault, heater_interlock, safe_state_active]
+          properties:
+            low_level: { type: boolean }
+            high_level: { type: boolean }
+            sensor_fault: { type: boolean }
+            heater_interlock: { type: boolean }
+            safe_state_active: { type: boolean }

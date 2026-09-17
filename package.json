@@ -1,0 +1,51 @@
+{
+  "name": "industrial-edge-digital-twin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic heated-tank digital twin with a C++ engine, typed edge gateway, MQTT telemetry, and accessible HMI.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12 <25",
+    "pnpm": ">=11 <12"
+  },
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "build": "pnpm run build:gateway && pnpm run build:hmi",
+    "build:gateway": "tsc -p gateway/tsconfig.json",
+    "build:hmi": "vite build --config hmi/vite.config.ts",
+    "benchmark": "node scripts/benchmark-engine.mjs",
+    "dev": "tsx gateway/src/main.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "repository:check": "node scripts/check-repository.mjs",
+    "start:test": "cross-env NODE_ENV=test TWIN_COMMAND_TOKEN=local-demo-token PORT=8080 node gateway/dist/main.js",
+    "symbols": "node scripts/generate-symbol-index.mjs",
+    "symbols:check": "node scripts/generate-symbol-index.mjs --check",
+    "test": "vitest run --coverage",
+    "test:e2e": "pnpm run build && node scripts/run-e2e.mjs",
+    "typecheck": "tsc -p gateway/tsconfig.json --noEmit && tsc -p gateway/test/tsconfig.json --noEmit && tsc -p hmi/tsconfig.json --noEmit && tsc -p hmi/test/tsconfig.json --noEmit && tsc -p tsconfig.json --noEmit",
+    "validate:web": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm symbols:check && pnpm repository:check"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.3",
+    "fastify": "5.12.5",
+    "mqtt": "5.16.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.3",
+    "@vitest/coverage-v8": "5.0.1",
+    "cross-env": "10.1.0",
+    "eslint": "9.39.5",
+    "prettier": "3.9.7",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.0",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
+  }
+}

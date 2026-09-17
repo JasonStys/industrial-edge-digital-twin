@@ -1,0 +1,7 @@
+allowBuilds:
+  # Vite's pinned transpiler installs its platform-specific executable.
+  esbuild: true
+minimumReleaseAgeExclude:
+  - fastify@5.12.5
+  - mqtt@5.16.0
+  - prettier@3.9.7

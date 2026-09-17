@@ -1,0 +1,8 @@
+# File: .clang-format
+# Purpose: Deterministic C++ formatting derived from LLVM with a 100-column limit.
+
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 4
+PointerAlignment: Left
+SortIncludes: CaseSensitive

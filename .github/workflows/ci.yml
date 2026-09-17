@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cpp-linux:
+    name: C++ Linux sanitizers
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check C++ formatting
+        run:
+          find cpp -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 clang-format
+          --dry-run --Werror
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DEDGE_TWIN_ENABLE_SANITIZERS=ON
+      - name: Build with warnings as errors
+        run: cmake --build build --parallel
+      - name: Run C++ tests
+        run: ctest --test-dir build --output-on-failure
+      - name: Run bounded fault scenario
+        run: ./build/twin-engine --scenario sensor-freeze --steps 300 > /dev/null
+
+  cpp-windows:
+    name: C++ Windows MSVC
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Configure
+        run: cmake -S . -B build -A x64
+      - name: Build with warnings as errors
+        run: cmake --build build --config Release --parallel
+      - name: Run C++ tests
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Run deterministic scenario
+        run: .\build\Release\twin-engine.exe --scenario nominal --steps 300 | Out-Null
+
+  web:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        uses: pnpm/action-setup@d9184bf108216479bc5a137cc391f4d7b14c870b # v6.1.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Configure C++ integration fixture
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build C++ integration fixture
+        run: cmake --build build --parallel
+      - name: Check formatting
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Type-check
+        run: pnpm typecheck
+      - name: Run unit and process-integration tests
+        run: pnpm test
+      - name: Build gateway and HMI
+        run: pnpm build
+      - name: Check generated symbol index
+        run: pnpm symbols:check
+      - name: Check repository policy
+        run: pnpm repository:check
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+      - name: Upload coverage evidence
+        if: matrix.node == 24
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: typescript-coverage
+          path: reports/coverage
+          if-no-files-found: error
+          retention-days: 14
+
+  browser:
+    name: Browser, accessibility, and performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [cpp-linux, cpp-windows, web]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        uses: pnpm/action-setup@d9184bf108216479bc5a137cc391f4d7b14c870b # v6.1.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build release engine
+        run:
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build --parallel
+      - name: Install Chromium system dependencies
+        run: pnpm playwright install --with-deps chromium
+      - name: Run desktop and mobile scenarios
+        run: pnpm test:e2e
+      - name: Measure engine throughput
+        run: pnpm benchmark
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-failure-evidence
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14

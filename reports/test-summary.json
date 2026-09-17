@@ -1,0 +1,29 @@
+{
+  "validatedAt": "2026-09-16T18:35:00-07:00",
+  "cpp": {
+    "compiler": "MSVC 19.51",
+    "configuration": "Release",
+    "passed": 15,
+    "failed": 0
+  },
+  "typescript": {
+    "passed": 34,
+    "failed": 0,
+    "coverage": {
+      "statementsPercent": 85.36,
+      "branchesPercent": 87.23,
+      "functionsPercent": 90.0,
+      "linesPercent": 85.58
+    }
+  },
+  "browser": {
+    "passed": 12,
+    "failed": 0,
+    "projects": ["desktop-chromium", "mobile-chromium"],
+    "axeSelectedTagViolations": 0
+  },
+  "productionDependencyAudit": {
+    "knownVulnerabilities": 0,
+    "auditLevel": "high"
+  }
+}

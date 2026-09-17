@@ -1,0 +1,11 @@
+{
+  "checkedAt": "generated-during-validation",
+  "checks": {
+    "codeFilesWithHeaders": 35,
+    "markdownFilesChecked": 17,
+    "pinnedWorkflowFiles": 1,
+    "requiredDocuments": 10
+  },
+  "failures": [],
+  "passed": true
+}

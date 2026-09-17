@@ -1,0 +1,11 @@
+{
+  "benchmark": "fixed-step nominal simulation with JSON serialization discarded by the parent",
+  "engine": "build-release/twin-engine.exe",
+  "measuredAt": "2026-09-17T01:33:22.333Z",
+  "runs": 5,
+  "stepsPerRun": 10000,
+  "simulatedSecondsPerRun": 1000,
+  "samplesMs": [111.491, 124.336, 130.147, 135.117, 151.944],
+  "medianMs": 130.147,
+  "medianStepsPerSecond": 76836
+}

@@ -1,0 +1,283 @@
+<!doctype html>
+<!--
+  File: index.html
+  Purpose: Semantic, keyboard-accessible shell for live process telemetry and bounded controls.
+  Major regions: header, process overview, trend, alarms, controls, and engineering notes.
+  Exact element line locations are generated in docs/generated/symbol-index.md.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A deterministic heated-tank digital twin with quality-aware telemetry, explicit interlocks, and fault injection."
+    />
+    <title>Harbor Twin Lab</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/app.ts"></script>
+  </head>
+  <body data-connection="connecting">
+    <a class="skip-link" href="#main-content">Skip to process overview</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Harbor Twin Lab home">
+        <span class="brand-mark" aria-hidden="true">HT</span>
+        <span><strong>Harbor Twin Lab</strong><small>Deterministic edge simulation</small></span>
+      </a>
+      <div class="connection" role="status" aria-live="polite">
+        <span class="connection-dot" aria-hidden="true"></span>
+        <span id="connection-label">Connecting</span>
+      </div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">HEATED TANK · TANK-01</p>
+          <h1 id="page-title">Process state you can inspect and challenge.</h1>
+          <p class="lede">
+            A synthetic process model that separates value, freshness, quality, requested output,
+            and actual output—then makes every interlock visible.
+          </p>
+        </div>
+        <dl class="run-meta">
+          <div>
+            <dt>Mode</dt>
+            <dd id="mode-value">—</dd>
+          </div>
+          <div>
+            <dt>Controller</dt>
+            <dd id="controller-value">—</dd>
+          </div>
+          <div>
+            <dt>Sequence</dt>
+            <dd id="sequence-value">—</dd>
+          </div>
+          <div>
+            <dt>Simulation time</dt>
+            <dd id="time-value">—</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="dashboard" aria-label="Live process overview">
+        <article class="panel vessel-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">PROCESS</p>
+              <h2>Heated vessel</h2>
+            </div>
+            <span id="quality-badge" class="quality" data-quality="unknown">Unknown</span>
+          </div>
+          <div class="vessel-layout">
+            <div class="vessel" role="img" aria-labelledby="vessel-description">
+              <span id="vessel-description" class="sr-only">Tank level visualization</span>
+              <div id="tank-fill" class="tank-fill">
+                <span class="tank-grid" aria-hidden="true"></span>
+              </div>
+              <div class="tank-limit tank-limit-high"><span>High</span></div>
+              <div class="tank-limit tank-limit-low"><span>Low</span></div>
+            </div>
+            <div class="primary-readings">
+              <div><span>Level</span><strong id="level-value">—</strong><small>litres</small></div>
+              <div>
+                <span>Temperature</span><strong id="temperature-value">—</strong><small>°C</small>
+              </div>
+              <div>
+                <span>Source age</span><strong id="age-value">—</strong><small>seconds</small>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel outputs-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">ACTUATORS</p>
+              <h2>Requested vs actual</h2>
+            </div>
+          </div>
+          <div class="actuator-list">
+            <div class="actuator">
+              <div><strong>Inlet pump</strong><span id="pump-delta">Tracking</span></div>
+              <meter id="pump-requested" min="0" max="100" value="0">0%</meter>
+              <p>
+                <span id="pump-requested-label">0%</span> requested ·
+                <b id="pump-actual-label">0%</b> actual
+              </p>
+            </div>
+            <div class="actuator">
+              <div><strong>Outlet valve</strong><span id="outlet-delta">Tracking</span></div>
+              <meter id="outlet-requested" min="0" max="100" value="0">0%</meter>
+              <p>
+                <span id="outlet-requested-label">0%</span> requested ·
+                <b id="outlet-actual-label">0%</b> actual
+              </p>
+            </div>
+            <div class="actuator">
+              <div><strong>Heater</strong><span id="heater-delta">Tracking</span></div>
+              <meter id="heater-requested" min="0" max="100" value="0">0%</meter>
+              <p>
+                <span id="heater-requested-label">0%</span> requested ·
+                <b id="heater-actual-label">0%</b> actual
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel trend-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">LAST 9 SECONDS</p>
+              <h2>Level trend</h2>
+            </div>
+            <span id="target-level-label" class="target-label">Target —</span>
+          </div>
+          <svg
+            class="trend"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            role="img"
+            aria-labelledby="trend-title trend-description"
+          >
+            <title id="trend-title">Tank level trend</title>
+            <desc id="trend-description">Recent tank level as a percentage of capacity.</desc>
+            <line x1="0" y1="10" x2="100" y2="10"></line>
+            <line x1="0" y1="50" x2="100" y2="50"></line>
+            <line x1="0" y1="90" x2="100" y2="90"></line>
+            <polyline id="level-trend" points="" vector-effect="non-scaling-stroke"></polyline>
+          </svg>
+        </article>
+
+        <article class="panel alarms-panel" aria-labelledby="alarms-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">DIAGNOSTICS</p>
+              <h2 id="alarms-title">Alarms & interlocks</h2>
+            </div>
+            <span id="alarm-count" class="count">0 active</span>
+          </div>
+          <ul id="alarm-list" class="alarm-list">
+            <li class="quiet">Waiting for telemetry…</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="controls" aria-labelledby="controls-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CONTROL SURFACE</p>
+            <h2 id="controls-title">Issue bounded commands</h2>
+          </div>
+          <p>Bearer token stays in this page’s memory and is never written to storage.</p>
+        </div>
+        <div class="control-grid">
+          <form id="access-form" class="control-card">
+            <h3>Command access</h3>
+            <label for="command-token">Local command token</label
+            ><input
+              id="command-token"
+              name="token"
+              type="password"
+              autocomplete="off"
+              minlength="12"
+              required
+              placeholder="local-demo-token"
+            /><button type="submit">Use token</button>
+          </form>
+          <form id="mode-form" class="control-card">
+            <h3>Operating mode</h3>
+            <label for="mode-input">Mode</label
+            ><select id="mode-input" name="mode">
+              <option value="stopped">Stopped</option>
+              <option value="manual">Manual</option>
+              <option value="automatic">Automatic</option></select
+            ><button type="submit">Set mode</button>
+          </form>
+          <form id="target-form" class="control-card">
+            <h3>Automatic targets</h3>
+            <label for="level-target">Level target (L)</label
+            ><input
+              id="level-target"
+              name="level"
+              type="number"
+              min="50"
+              max="950"
+              step="1"
+              value="600"
+            /><label for="temperature-target">Temperature target (°C)</label
+            ><input
+              id="temperature-target"
+              name="temperature"
+              type="number"
+              min="5"
+              max="95"
+              step="0.5"
+              value="45"
+            /><button type="submit">Apply targets</button>
+          </form>
+          <form id="output-form" class="control-card">
+            <h3>Manual output</h3>
+            <label for="output-field">Actuator</label
+            ><select id="output-field" name="field">
+              <option value="pump_pct">Inlet pump</option>
+              <option value="outlet_valve_pct">Outlet valve</option>
+              <option value="heater_pct">Heater</option></select
+            ><label for="output-value">Requested output (%)</label
+            ><input
+              id="output-value"
+              name="value"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              value="0"
+            /><button type="submit">Set output</button>
+          </form>
+          <form id="fault-form" class="control-card danger-card">
+            <h3>Fault injection</h3>
+            <label for="fault-input">Synthetic fault</label
+            ><select id="fault-input" name="fault">
+              <option value="freeze_level_sensor">Freeze level sensor</option>
+              <option value="level_sensor_out_of_range">Level out of range</option>
+              <option value="pump_stuck_on">Pump stuck on</option>
+              <option value="heater_stuck_on">Heater stuck on</option>
+            </select>
+            <div class="button-pair">
+              <button type="submit" data-enabled="true">Inject</button
+              ><button type="submit" data-enabled="false" class="secondary">Clear selected</button>
+            </div>
+          </form>
+          <div class="control-card stop-card">
+            <h3>Safe action</h3>
+            <p>
+              Requests stopped mode. Physical fault overrides remain visible as actual output
+              differences.
+            </p>
+            <button id="safe-stop" type="button">Request stopped mode</button
+            ><button id="clear-faults" class="secondary" type="button">
+              Clear all injected faults
+            </button>
+          </div>
+        </div>
+        <p id="command-status" class="command-status" role="status" aria-live="polite">
+          Enter the local token before issuing commands.
+        </p>
+      </section>
+
+      <section class="engineering-note" aria-labelledby="boundary-title">
+        <p class="eyebrow">MODEL BOUNDARY</p>
+        <h2 id="boundary-title">This is an educational simulator.</h2>
+        <p>
+          It demonstrates deterministic state, observability, and explicit failure behavior. It is
+          not a safety controller, a certified physical model, or authorization to connect software
+          to real equipment.
+        </p>
+      </section>
+    </main>
+    <footer>
+      <p>Harbor Twin Lab · Synthetic data · No external equipment</p>
+      <a href="/api/v1/health">Gateway health</a>
+    </footer>
+  </body>
+</html>

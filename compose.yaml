@@ -1,0 +1,17 @@
+name: harbor-twin-lab
+services:
+  broker:
+    image: eclipse-mosquitto:2.0.22
+    command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./infra/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    read_only: true
+    tmpfs:
+      - /mosquitto/data
+      - /mosquitto/log
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
