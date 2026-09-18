@@ -6,7 +6,9 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
-import { fileURLToPath } from "node:url";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import type { GatewayConfig } from "../src/config.js";
 import { createServer, tokenMatches, type TelemetryPublisher } from "../src/server.js";
@@ -32,9 +34,14 @@ class FakePublisher implements TelemetryPublisher {
 }
 
 let server: FastifyInstance | undefined;
+let staticTestRoot: string | undefined;
 afterEach(async () => {
   await server?.close();
   server = undefined;
+  if (staticTestRoot !== undefined) {
+    await rm(staticTestRoot, { force: true, recursive: true });
+    staticTestRoot = undefined;
+  }
 });
 
 describe("tokenMatches", () => {
@@ -170,9 +177,14 @@ describe("gateway routes", () => {
   });
 
   it("serves the built HMI without exposing filesystem paths", async () => {
-    const staticRoot = fileURLToPath(new URL("../../hmi/dist", import.meta.url));
+    staticTestRoot = await mkdtemp(join(tmpdir(), "edge-twin-static-"));
+    await writeFile(
+      join(staticTestRoot, "index.html"),
+      "<!doctype html><html><body>Harbor Twin Lab</body></html>",
+      "utf8",
+    );
     server = await createServer(
-      { ...config, staticRoot },
+      { ...config, staticRoot: staticTestRoot },
       new FakeEngine(),
       new FakePublisher(),
       true,
@@ -181,6 +193,6 @@ describe("gateway routes", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers["content-type"]).toContain("text/html");
     expect(response.body).toContain("Harbor Twin Lab");
-    expect(response.body).not.toContain(staticRoot);
+    expect(response.body).not.toContain(staticTestRoot);
   });
 });
