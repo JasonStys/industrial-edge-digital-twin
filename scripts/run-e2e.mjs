@@ -59,7 +59,7 @@ async function stopServer() {
   }
 }
 
-let exitCode = 1;
+let exitCode;
 try {
   await waitForServer();
   const playwrightCli = path.join(repositoryRoot, "node_modules", "@playwright", "test", "cli.js");
