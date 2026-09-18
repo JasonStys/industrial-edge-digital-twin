@@ -178,6 +178,11 @@ See the complete [file reference](docs/file-reference.md) and generated
 - The local command token is suitable only for loopback demonstration. Use a real identity and
   authorization layer before any shared deployment.
 
+## Maintenance evidence
+
+See the [latest maintenance audit](docs/reports/maintenance-audit-2026-09-18.md) for hosted
+verification and dependency compatibility decisions.
+
 ## License and contribution
 
 The code is available under the [MIT License](LICENSE). Please read
