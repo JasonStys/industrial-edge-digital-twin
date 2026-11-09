@@ -24,10 +24,14 @@ actuators, interlocks, and safe-state behavior testable rather than implicit.
 - Read-only REST and Server-Sent Events telemetry; bearer-protected write commands.
 - Optional MQTT v5 retained state at QoS 1 with latest-value coalescing.
 - Desktop and mobile HMI with keyboard, reflow, and automated WCAG A/AA checks.
+- Bounded multi-signal recording, time-aligned signal selection, read-only playback,
+  quality/fault/alarm transition markers and portable strict JSON import/export. Historical review
+  cannot issue commands or masquerade as live measurements.
 - Linux sanitizer CI, Windows compiler CI, Node.js 22/24 CI, and pinned GitHub Actions.
 
-Measured results live in [the validation report](docs/reports/validation-report.md), not in
-unqualified claims.
+Current measured results live in
+[practical-workflow validation](docs/reports/practical-workflows-2026-11-09.md); the
+[original validation report](docs/reports/validation-report.md) remains a dated baseline.
 
 ## 60-second quick start
 
@@ -68,6 +72,10 @@ is deliberately local-only; production mode refuses to start without an explicit
 4. Clear faults, select **Stopped**, and inject **Pump stuck on**. Requested pump output remains 0%
    while actual output becomes 100%, making the physical override visible.
 5. Inspect `/api/v1/health`, `/api/v1/state`, and the retained MQTT topic if a broker is enabled.
+6. Start a recording before a fault campaign, stop capture, then review or play retained samples.
+   Switch plant/measured level, temperature and pump trends to inspect the same timestamps. Export a
+   portable trace; a later import opens an explicitly unauthenticated read-only review. Return to
+   live before commanding. See [recording and replay](docs/recording-and-replay.md).
 
 ## Architecture
 
@@ -107,7 +115,7 @@ pnpm format:check       # formatting policy
 pnpm lint               # type-aware linting
 pnpm typecheck          # gateway, tests, HMI, and config files
 pnpm test               # unit/integration tests with enforced coverage
-pnpm test:e2e           # 12 desktop/mobile browser scenarios
+pnpm test:e2e           # 20 desktop/mobile browser scenarios
 pnpm build              # gateway JavaScript and static HMI
 pnpm symbols:check      # exact line-location index is current
 pnpm repository:check   # headers, links, pinning, structure, and naming policy
@@ -140,17 +148,18 @@ For a local demonstration broker, run `docker compose up broker`, then set
 
 ## Major features and where they live
 
-| Feature                    | Main implementation               | Verification                                          |
-| -------------------------- | --------------------------------- | ----------------------------------------------------- |
-| Mass and energy balance    | `cpp/src/process_model.cpp`       | Physical-bound property loop and known-flow test      |
-| Modes and interlocks       | `cpp/src/controller.cpp`          | Low/high level, stale quality, manual/automatic tests |
-| Faults and idempotency     | `cpp/src/engine.cpp`              | Fault campaigns and duplicate-command tests           |
-| Bounded process protocol   | `cpp/src/protocol.cpp`            | Oversize, control-character, escaping tests           |
-| Runtime contracts          | `gateway/src/contracts.ts`        | Positive, negative, range, and extra-field tests      |
-| Supervised process bridge  | `gateway/src/engine-client.ts`    | Real child-process integration and queue-bound tests  |
-| HTTP/SSE security boundary | `gateway/src/server.ts`           | Auth, schema, health, static-host, and error tests    |
-| MQTT coalescing            | `gateway/src/mqtt-publisher.ts`   | Success, replacement, failure, and shutdown tests     |
-| Accessible HMI             | `hmi/src/app.ts` and `styles.css` | Playwright + axe on desktop and mobile Chromium       |
+| Feature                          | Main implementation                  | Verification                                                                                         |
+| -------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Mass and energy balance          | `cpp/src/process_model.cpp`          | Physical-bound property loop and known-flow test                                                     |
+| Modes and interlocks             | `cpp/src/controller.cpp`             | Low/high level, stale quality, manual/automatic tests                                                |
+| Faults and idempotency           | `cpp/src/engine.cpp`                 | Fault campaigns and duplicate-command tests                                                          |
+| Bounded process protocol         | `cpp/src/protocol.cpp`               | Oversize, control-character, escaping tests                                                          |
+| Runtime contracts                | `gateway/src/contracts.ts`           | Positive, negative, range, and extra-field tests                                                     |
+| Supervised process bridge        | `gateway/src/engine-client.ts`       | Real child-process integration and queue-bound tests                                                 |
+| HTTP/SSE security boundary       | `gateway/src/server.ts`              | Auth, schema, health, static-host, and error tests                                                   |
+| MQTT coalescing                  | `gateway/src/mqtt-publisher.ts`      | Success, replacement, failure, and shutdown tests                                                    |
+| Capture/replay and signal trends | `hmi/src/trace.ts`, `hmi/src/app.ts` | Capacity/ordering/unit-scale oracles, real fault-capture/export and analyst import/playback journeys |
+| Accessible HMI                   | `hmi/src/app.ts` and `styles.css`    | Playwright + axe on desktop and mobile Chromium                                                      |
 
 See the complete [file reference](docs/file-reference.md) and generated
 [source symbol index](docs/generated/symbol-index.md).
@@ -163,6 +172,8 @@ See the complete [file reference](docs/file-reference.md) and generated
 - [API and MQTT contracts](docs/api-and-mqtt.md)
 - [Safety, security, and threat model](docs/safety-and-security.md)
 - [Testing strategy](docs/testing.md)
+- [Recording, replay and portable trace review](docs/recording-and-replay.md)
+- [Observed practical-workflow validation](docs/reports/practical-workflows-2026-11-09.md)
 - [Complexity analysis](docs/big-o.md)
 - [Operations and rollback runbook](docs/operations.md)
 - [Validation report](docs/reports/validation-report.md)

@@ -5,10 +5,27 @@
  */
 
 import { SnapshotSchema, type ApiCommand, type Snapshot } from "../../gateway/src/contracts.js";
+import {
+  TRACE_BYTES,
+  TraceRecorder,
+  currentSegment,
+  parseTrace,
+  sampleMarkers,
+  serializeTrace,
+  trendPoints,
+  type TraceRecording,
+  type TrendSignal,
+} from "./trace.js";
 
 let commandToken = "";
-let latestSequence = -1;
-const levelHistory: number[] = [];
+const recorder = new TraceRecorder();
+let latestSnapshot: Snapshot | undefined;
+const liveHistory: Snapshot[] = [];
+let recording: TraceRecording | undefined;
+let recordingOrigin = "";
+let reviewIndex: number | undefined;
+let playback: ReturnType<typeof setInterval> | undefined;
+let traceOperation = 0;
 
 /** Return a required DOM element or fail early with an actionable developer error. */
 function element<T extends Element = HTMLElement>(id: string): T {
@@ -19,11 +36,14 @@ function element<T extends Element = HTMLElement>(id: string): T {
 
 /** Update text without interpreting telemetry or error strings as markup. */
 function text(id: string, value: string): void {
-  element(id).textContent = value;
+  const target = element(id);
+  if (target.textContent !== value) target.textContent = value;
 }
 
 /** Format finite engineering values consistently for scanning. */
 function engineering(value: number, digits = 1): string {
+  if (Math.abs(value) >= 10_000_000 || (value !== 0 && Math.abs(value) < 0.0001))
+    return value.toExponential(3);
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: digits,
     minimumFractionDigits: digits,
@@ -71,20 +91,28 @@ function renderAlarms(snapshot: Snapshot): void {
   text("alarm-count", `${active.length} active`);
 }
 
-/** Draw a bounded, capacity-normalized trend using an SVG polyline. */
-function renderTrend(levelLitres: number): void {
-  if (levelHistory.length >= 90) levelHistory.shift();
-  levelHistory.push(levelLitres);
-  const points = levelHistory.map((level, index) => {
-    const x = levelHistory.length <= 1 ? 0 : (index / (levelHistory.length - 1)) * 100;
-    const y = 100 - Math.max(0, Math.min(100, level / 10));
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  element<SVGPolylineElement>("level-trend").setAttribute("points", points.join(" "));
+/** Draw the selected signal against real simulation time, never connecting a reset discontinuity. */
+function renderTrend(samples: readonly Snapshot[]): void {
+  const signal = element<HTMLSelectElement>("trend-signal").value as TrendSignal;
+  element<SVGPolylineElement>("level-trend").setAttribute("points", trendPoints(samples, signal));
+  const segment = currentSegment(samples);
+  text("trend-title", `Time-aligned ${signal.replaceAll("_", " ")} trend`);
+  text(
+    "trend-range",
+    segment.length === 0
+      ? "Waiting for valid samples."
+      : `${engineering(segment[0]!.simulation_time_s)}–${engineering(segment.at(-1)!.simulation_time_s)} simulation seconds · ${segment.length} retained samples in this segment`,
+  );
+  text(
+    "trend-description",
+    `Time-aligned ${signal.replaceAll("_", " ")} in the latest contiguous simulation-time segment.`,
+  );
 }
 
 /** Render one schema-validated snapshot into all live regions and visual indicators. */
 export function renderSnapshot(snapshot: Snapshot): void {
+  element("process-overview").removeAttribute("hidden");
+  element<HTMLFieldSetElement>("command-surface").disabled = reviewIndex !== undefined;
   text("mode-value", snapshot.mode);
   text("controller-value", snapshot.controller_state.replaceAll("_", " "));
   text("sequence-value", String(snapshot.sequence));
@@ -110,10 +138,94 @@ export function renderSnapshot(snapshot: Snapshot): void {
   renderActuator("outlet", snapshot.requested.outlet_valve_pct, snapshot.actual.outlet_valve_pct);
   renderActuator("heater", snapshot.requested.heater_pct, snapshot.actual.heater_pct);
   renderAlarms(snapshot);
-  if (snapshot.sequence !== latestSequence) {
-    latestSequence = snapshot.sequence;
-    renderTrend(snapshot.plant.level_l);
-  }
+}
+
+/** Stop owned playback without disturbing live telemetry, the recorder or the plant. */
+function pausePlayback(): void {
+  if (playback !== undefined) clearInterval(playback);
+  playback = undefined;
+  text("trace-play", "Play recording · 5 samples/s");
+}
+
+/** Render one captured state with observable transition markers; commands stay disabled in review. */
+function showRecorded(index: number): void {
+  if (
+    recording === undefined ||
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= recording.snapshots.length
+  )
+    return;
+  reviewIndex = index;
+  const snapshot = recording.snapshots[index]!;
+  renderSnapshot(snapshot);
+  renderTrend(recording.snapshots.slice(0, index + 1));
+  element<HTMLFieldSetElement>("command-surface").disabled = true;
+  const position = element<HTMLInputElement>("trace-position");
+  position.max = String(recording.snapshots.length - 1);
+  position.value = String(index);
+  text(
+    "trace-position-label",
+    `Sample ${index + 1} of ${recording.snapshots.length} · simulation ${engineering(snapshot.simulation_time_s)} s · sequence ${snapshot.sequence}`,
+  );
+  const markers = sampleMarkers(recording.snapshots[index - 1], snapshot);
+  text(
+    "trace-markers",
+    markers.length === 0
+      ? "No observed mode, fault, alarm or quality transition at this sample."
+      : markers.join(" · "),
+  );
+  text(
+    "trace-mode",
+    `RECORDED REVIEW · ${recordingOrigin}; live simulator is independent and commands are disabled.`,
+  );
+  text(
+    "connection-label",
+    `Recorded review · live source ${document.body.dataset.connection === "live" ? "connected" : "unavailable"}`,
+  );
+  element<HTMLButtonElement>("trace-play").disabled = false;
+  element<HTMLButtonElement>("trace-live").disabled = false;
+}
+
+/** Restore actual live values before enabling controls; replay never issues process commands. */
+function returnLive(): void {
+  traceOperation += 1;
+  pausePlayback();
+  reviewIndex = undefined;
+  element<HTMLFieldSetElement>("command-surface").disabled = latestSnapshot === undefined;
+  element<HTMLButtonElement>("trace-play").disabled = true;
+  element<HTMLButtonElement>("trace-live").disabled = true;
+  if (latestSnapshot !== undefined) renderSnapshot(latestSnapshot);
+  else element("process-overview").setAttribute("hidden", "");
+  renderTrend(liveHistory);
+  text(
+    "trace-mode",
+    latestSnapshot === undefined
+      ? "LIVE VIEW · awaiting valid telemetry; recorded readings are hidden."
+      : "LIVE VIEW · synthetic process only",
+  );
+  text(
+    "connection-label",
+    document.body.dataset.connection === "live" ? "Live telemetry" : "Reconnecting",
+  );
+}
+
+/** Refresh capture actions without allocating full trace copies on every telemetry envelope. */
+function recordingStatus(): void {
+  text(
+    "trace-status",
+    recorder.active
+      ? `Recording ${recorder.count} retained samples (maximum 1200).`
+      : recording === undefined
+        ? "No recording yet. Start after live telemetry arrives or import a trace."
+        : `${recording.snapshots.length} recorded samples (${recordingOrigin}); ${recording.dropped} earlier samples evicted by the capacity limit.`,
+  );
+  element<HTMLButtonElement>("trace-start").disabled = recorder.active;
+  element<HTMLButtonElement>("trace-stop").disabled = !recorder.active;
+  for (const id of ["trace-review", "trace-export"])
+    element<HTMLButtonElement>(id).disabled = recording === undefined || recorder.active;
+  element<HTMLInputElement>("trace-import").disabled = recorder.active;
+  element<HTMLInputElement>("trace-position").disabled = recording === undefined || recorder.active;
 }
 
 /** Parse unknown telemetry before it reaches rendering code. */
@@ -124,41 +236,72 @@ function acceptSnapshot(candidate: unknown): void {
     document.body.dataset.connection = "offline";
     return;
   }
-  renderSnapshot(parsed.data);
-  text("connection-label", "Live telemetry");
+  const snapshot = parsed.data;
+  if (latestSnapshot === undefined || JSON.stringify(snapshot) !== JSON.stringify(latestSnapshot)) {
+    if (
+      latestSnapshot !== undefined &&
+      snapshot.simulation_time_s < latestSnapshot.simulation_time_s
+    )
+      liveHistory.length = 0;
+    if (liveHistory.length >= 90) liveHistory.shift();
+    liveHistory.push(snapshot);
+    recorder.append(snapshot);
+  }
+  latestSnapshot = snapshot;
+  recordingStatus();
+  if (reviewIndex === undefined) {
+    renderSnapshot(snapshot);
+    renderTrend(liveHistory);
+    text("connection-label", "Live telemetry");
+  }
   document.body.dataset.connection = "live";
 }
 
 /** Send a command with the in-memory bearer token and surface the server's decision. */
 async function sendCommand(command: ApiCommand): Promise<void> {
+  if (reviewIndex !== undefined) {
+    text("command-status", "Return to live view before issuing a command.");
+    return;
+  }
   if (commandToken.length === 0) {
     text("command-status", "Enter and confirm the local command token first.");
     return;
   }
-  const response = await fetch("/api/v1/commands", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${commandToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(command),
-  });
-  const body: unknown = await response.json();
-  if (!response.ok) {
-    const detail =
-      typeof body === "object" &&
-      body !== null &&
-      "detail" in body &&
-      typeof body.detail === "string"
-        ? body.detail
-        : `Command failed with HTTP ${response.status}`;
-    text("command-status", detail);
+  if (latestSnapshot === undefined) {
+    text("command-status", "Wait for valid live telemetry before issuing a command.");
     return;
   }
-  if (typeof body === "object" && body !== null && "result" in body) {
-    const result = body.result as { message?: unknown; duplicate?: unknown };
-    const message = typeof result.message === "string" ? result.message : "Command accepted";
-    text("command-status", `${message}${result.duplicate === true ? " (duplicate)" : ""}.`);
+  try {
+    const response = await fetch("/api/v1/commands", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${commandToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(command),
+    });
+    const body: unknown = await response.json();
+    if (!response.ok) {
+      const detail =
+        typeof body === "object" &&
+        body !== null &&
+        "detail" in body &&
+        typeof body.detail === "string"
+          ? body.detail
+          : `Command failed with HTTP ${response.status}`;
+      text("command-status", detail);
+      return;
+    }
+    if (typeof body === "object" && body !== null && "result" in body) {
+      const result = body.result as { message?: unknown; duplicate?: unknown };
+      const message = typeof result.message === "string" ? result.message : "Command accepted";
+      text("command-status", `${message}${result.duplicate === true ? " (duplicate)" : ""}.`);
+    }
+  } catch {
+    text(
+      "command-status",
+      "Command response unavailable. Verify live state before retrying; no success is assumed.",
+    );
   }
 }
 
@@ -236,6 +379,103 @@ element<HTMLButtonElement>("clear-faults").addEventListener("click", () => {
   void sendCommand({ commandId: commandId(), type: "clearFaults" });
 });
 
+element<HTMLButtonElement>("trace-start").addEventListener("click", () => {
+  if (latestSnapshot === undefined) {
+    text("trace-status", "Wait for valid live telemetry before starting a recording.");
+    return;
+  }
+  returnLive();
+  text("trace-error", "");
+  element<HTMLInputElement>("trace-import").value = "";
+  recording = undefined;
+  recordingOrigin = "";
+  recorder.start();
+  recorder.append(latestSnapshot);
+  recordingStatus();
+});
+element<HTMLButtonElement>("trace-stop").addEventListener("click", () => {
+  recorder.stop();
+  if (recorder.count > 0) {
+    recording = recorder.snapshot();
+    recordingOrigin = "captured in this tab";
+  }
+  recordingStatus();
+});
+element<HTMLButtonElement>("trace-review").addEventListener("click", () => {
+  pausePlayback();
+  showRecorded(0);
+});
+element<HTMLButtonElement>("trace-live").addEventListener("click", returnLive);
+element<HTMLInputElement>("trace-position").addEventListener("input", () => {
+  pausePlayback();
+  showRecorded(element<HTMLInputElement>("trace-position").valueAsNumber);
+});
+element<HTMLSelectElement>("trend-signal").addEventListener("change", () => {
+  if (reviewIndex === undefined) renderTrend(liveHistory);
+  else showRecorded(reviewIndex);
+});
+element<HTMLButtonElement>("trace-play").addEventListener("click", () => {
+  if (playback !== undefined) return pausePlayback();
+  if (recording === undefined || reviewIndex === undefined) return;
+  if (reviewIndex === recording.snapshots.length - 1) showRecorded(0);
+  text("trace-play", "Pause recording");
+  playback = setInterval(() => {
+    if (
+      recording === undefined ||
+      reviewIndex === undefined ||
+      reviewIndex >= recording.snapshots.length - 1
+    )
+      return pausePlayback();
+    showRecorded(reviewIndex + 1);
+  }, 200);
+});
+element<HTMLButtonElement>("trace-export").addEventListener("click", () => {
+  if (recording === undefined) return;
+  const url = URL.createObjectURL(
+    new Blob([serializeTrace(recording)], { type: "application/json" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "heated-tank-recording.json";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+element<HTMLInputElement>("trace-import").addEventListener("change", (event) => {
+  const input = event.currentTarget as HTMLInputElement;
+  const file = input.files?.[0];
+  if (file === undefined) return;
+  if (recorder.active) {
+    text("trace-error", "Stop recording before importing a different trace.");
+    input.value = "";
+    return;
+  }
+  const operation = ++traceOperation;
+  text("trace-error", "");
+  void (async () => {
+    try {
+      if (file.size > TRACE_BYTES) throw new Error("Trace exceeds the 2 MiB import limit.");
+      const bytes = await file.arrayBuffer();
+      if (bytes.byteLength > TRACE_BYTES) throw new Error("Trace exceeds the 2 MiB import limit.");
+      const imported = parseTrace(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+      if (operation !== traceOperation) return;
+      pausePlayback();
+      recording = imported;
+      recordingOrigin = "imported, not authenticated";
+      recordingStatus();
+      showRecorded(0);
+    } catch {
+      if (operation !== traceOperation) return;
+      text(
+        "trace-error",
+        "Import rejected: expected a bounded version-1 simulated trace with valid snapshots. Previous recording and live state are unchanged.",
+      );
+    } finally {
+      if (operation === traceOperation) input.value = "";
+    }
+  })();
+});
+recordingStatus();
+
 fetch("/api/v1/state")
   .then(async (response) => {
     if (!response.ok) throw new Error(`Initial state returned HTTP ${response.status}`);
@@ -248,7 +488,14 @@ fetch("/api/v1/state")
   });
 
 const events = new EventSource("/api/v1/events");
-window.addEventListener("pagehide", () => events.close(), { once: true });
+window.addEventListener(
+  "pagehide",
+  () => {
+    events.close();
+    pausePlayback();
+  },
+  { once: true },
+);
 events.addEventListener("telemetry", (event) => {
   try {
     acceptSnapshot(JSON.parse((event as MessageEvent<string>).data));

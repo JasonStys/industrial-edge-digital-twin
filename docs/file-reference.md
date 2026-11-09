@@ -57,13 +57,16 @@ interfaces/functions receive local API comments. Exact declaration lines are reg
 
 ## HMI
 
-| File                         | Responsibility                                                     |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `hmi/index.html`             | Semantic page regions, forms, live regions, and SVG trend          |
-| `hmi/src/styles.css`         | Responsive visual system, focus, quality, and reduced motion       |
-| `hmi/src/app.ts`             | Runtime validation, safe rendering, commands, SSE lifecycle        |
-| `hmi/test/dashboard.spec.ts` | Desktop/mobile interaction, accessibility, fault, and reflow tests |
-| `hmi/vite.config.ts`         | Static production build                                            |
+| File                              | Responsibility                                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hmi/index.html`                  | Semantic page regions, forms, live regions, and SVG trend                                                                                         |
+| `hmi/src/styles.css`              | Responsive visual system, focus, quality, and reduced motion                                                                                      |
+| `hmi/src/app.ts`                  | Runtime validation, safe rendering, commands, SSE lifecycle                                                                                       |
+| `hmi/src/trace.ts`                | Circular-buffer capture, strict portable trace parsing/serialization, observable transition markers and time-aligned contiguous-segment plotting. |
+| `hmi/test/trace.test.ts`          | Independent chronological eviction/copy/bounds/precision round-trip and actual simulation-time/unit-scale oracles.                                |
+| `gateway/test/e2e-runner.test.ts` | Owned sentinel confirms an occupied test port is refused before any HTTP probe or gateway startup.                                                |
+| `hmi/test/dashboard.spec.ts`      | Desktop/mobile interaction, accessibility, fault, and reflow tests                                                                                |
+| `hmi/vite.config.ts`              | Static production build                                                                                                                           |
 
 ## Scripts and infrastructure
 

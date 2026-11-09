@@ -60,7 +60,7 @@
         </dl>
       </section>
 
-      <section class="dashboard" aria-label="Live process overview">
+      <section id="process-overview" class="dashboard" aria-label="Live process overview">
         <article class="panel vessel-panel">
           <div class="panel-heading">
             <div>
@@ -128,11 +128,22 @@
         <article class="panel trend-panel">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">LAST 9 SECONDS</p>
-              <h2>Level trend</h2>
+              <p class="eyebrow">SIMULATION TIME · LATEST CONTIGUOUS SEGMENT</p>
+              <h2>Signal trend</h2>
             </div>
             <span id="target-level-label" class="target-label">Target —</span>
           </div>
+          <label for="trend-signal">Trend signal and scale</label>
+          <select id="trend-signal">
+            <option value="plant_level">Plant level · 0–1000 L</option>
+            <option value="sensor_level">Measured level · 0–1000 L</option>
+            <option value="temperature">Measured temperature · −10–120 °C</option>
+            <option value="pump">Actual pump · 0–100%</option>
+          </select>
+          <p>
+            Horizontal spacing uses simulation seconds. Values outside the scale are visually
+            clamped; exact values and quality remain in the recording.
+          </p>
           <svg
             class="trend"
             viewBox="0 0 100 100"
@@ -147,6 +158,7 @@
             <line x1="0" y1="90" x2="100" y2="90"></line>
             <polyline id="level-trend" points="" vector-effect="non-scaling-stroke"></polyline>
           </svg>
+          <p id="trend-range">Waiting for valid samples.</p>
         </article>
 
         <article class="panel alarms-panel" aria-labelledby="alarms-title">
@@ -163,6 +175,46 @@
         </article>
       </section>
 
+      <section class="panel trace-panel" aria-labelledby="trace-title">
+        <h2 id="trace-title">Record and review a fault scenario</h2>
+        <p id="trace-mode" role="status">LIVE VIEW · synthetic process only</p>
+        <p>
+          Capture multiple signals, requested/actual outputs, quality, faults and alarms together.
+          Starting a new recording replaces the previous in-memory capture. Export before closing
+          this page.
+        </p>
+        <div class="trace-actions">
+          <button id="trace-start" type="button">Start new recording</button>
+          <button id="trace-stop" type="button" disabled>Stop recording</button>
+          <button id="trace-review" type="button" disabled>Review recording</button>
+          <button id="trace-play" type="button" disabled>Play recording · 5 samples/s</button>
+          <button id="trace-live" type="button" disabled>Return to live</button>
+          <button id="trace-export" type="button" disabled>Export recording</button>
+          <label for="trace-import">Import recording (JSON, maximum 2 MiB)</label>
+          <input id="trace-import" type="file" accept="application/json,.json" />
+        </div>
+        <p id="trace-status">No recording yet.</p>
+        <p id="trace-error" role="alert"></p>
+        <label for="trace-position">Recorded sample</label>
+        <input id="trace-position" type="range" min="0" max="0" value="0" step="1" />
+        <p id="trace-position-label">Select Review recording to inspect a retained sample.</p>
+        <p id="trace-markers">Transition markers appear here during review.</p>
+        <details>
+          <summary>How recording and review work</summary>
+          <p>
+            Start capture, change the simulated mode or inject a test fault, then stop and review.
+            Scrub the recorded sample or play at five samples per second. Select a trend signal to
+            compare measured values, plant values and actual outputs at the same simulation time.
+          </p>
+          <p>
+            Review is read-only and disables live commands. Return to live before commanding. The
+            recorder retains at most 1,200 samples, counts evicted samples and stores nothing
+            automatically. Export JSON to keep it. Imported traces are schema-validated but not
+            authenticated as measurements from this tab. They never issue commands.
+          </p>
+        </details>
+      </section>
+
       <section class="controls" aria-labelledby="controls-title">
         <div class="section-heading">
           <div>
@@ -171,95 +223,100 @@
           </div>
           <p>Bearer token stays in this page’s memory and is never written to storage.</p>
         </div>
-        <div class="control-grid">
-          <form id="access-form" class="control-card">
-            <h3>Command access</h3>
-            <label for="command-token">Local command token</label
-            ><input
-              id="command-token"
-              name="token"
-              type="password"
-              autocomplete="off"
-              minlength="12"
-              required
-              placeholder="local-demo-token"
-            /><button type="submit">Use token</button>
-          </form>
-          <form id="mode-form" class="control-card">
-            <h3>Operating mode</h3>
-            <label for="mode-input">Mode</label
-            ><select id="mode-input" name="mode">
-              <option value="stopped">Stopped</option>
-              <option value="manual">Manual</option>
-              <option value="automatic">Automatic</option></select
-            ><button type="submit">Set mode</button>
-          </form>
-          <form id="target-form" class="control-card">
-            <h3>Automatic targets</h3>
-            <label for="level-target">Level target (L)</label
-            ><input
-              id="level-target"
-              name="level"
-              type="number"
-              min="50"
-              max="950"
-              step="1"
-              value="600"
-            /><label for="temperature-target">Temperature target (°C)</label
-            ><input
-              id="temperature-target"
-              name="temperature"
-              type="number"
-              min="5"
-              max="95"
-              step="0.5"
-              value="45"
-            /><button type="submit">Apply targets</button>
-          </form>
-          <form id="output-form" class="control-card">
-            <h3>Manual output</h3>
-            <label for="output-field">Actuator</label
-            ><select id="output-field" name="field">
-              <option value="pump_pct">Inlet pump</option>
-              <option value="outlet_valve_pct">Outlet valve</option>
-              <option value="heater_pct">Heater</option></select
-            ><label for="output-value">Requested output (%)</label
-            ><input
-              id="output-value"
-              name="value"
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              value="0"
-            /><button type="submit">Set output</button>
-          </form>
-          <form id="fault-form" class="control-card danger-card">
-            <h3>Fault injection</h3>
-            <label for="fault-input">Synthetic fault</label
-            ><select id="fault-input" name="fault">
-              <option value="freeze_level_sensor">Freeze level sensor</option>
-              <option value="level_sensor_out_of_range">Level out of range</option>
-              <option value="pump_stuck_on">Pump stuck on</option>
-              <option value="heater_stuck_on">Heater stuck on</option>
-            </select>
-            <div class="button-pair">
-              <button type="submit" data-enabled="true">Inject</button
-              ><button type="submit" data-enabled="false" class="secondary">Clear selected</button>
+        <fieldset id="command-surface">
+          <legend class="sr-only">Live simulator commands</legend>
+          <div class="control-grid">
+            <form id="access-form" class="control-card">
+              <h3>Command access</h3>
+              <label for="command-token">Local command token</label
+              ><input
+                id="command-token"
+                name="token"
+                type="password"
+                autocomplete="off"
+                minlength="12"
+                required
+                placeholder="local-demo-token"
+              /><button type="submit">Use token</button>
+            </form>
+            <form id="mode-form" class="control-card">
+              <h3>Operating mode</h3>
+              <label for="mode-input">Mode</label
+              ><select id="mode-input" name="mode">
+                <option value="stopped">Stopped</option>
+                <option value="manual">Manual</option>
+                <option value="automatic">Automatic</option></select
+              ><button type="submit">Set mode</button>
+            </form>
+            <form id="target-form" class="control-card">
+              <h3>Automatic targets</h3>
+              <label for="level-target">Level target (L)</label
+              ><input
+                id="level-target"
+                name="level"
+                type="number"
+                min="50"
+                max="950"
+                step="1"
+                value="600"
+              /><label for="temperature-target">Temperature target (°C)</label
+              ><input
+                id="temperature-target"
+                name="temperature"
+                type="number"
+                min="5"
+                max="95"
+                step="0.5"
+                value="45"
+              /><button type="submit">Apply targets</button>
+            </form>
+            <form id="output-form" class="control-card">
+              <h3>Manual output</h3>
+              <label for="output-field">Actuator</label
+              ><select id="output-field" name="field">
+                <option value="pump_pct">Inlet pump</option>
+                <option value="outlet_valve_pct">Outlet valve</option>
+                <option value="heater_pct">Heater</option></select
+              ><label for="output-value">Requested output (%)</label
+              ><input
+                id="output-value"
+                name="value"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value="0"
+              /><button type="submit">Set output</button>
+            </form>
+            <form id="fault-form" class="control-card danger-card">
+              <h3>Fault injection</h3>
+              <label for="fault-input">Synthetic fault</label
+              ><select id="fault-input" name="fault">
+                <option value="freeze_level_sensor">Freeze level sensor</option>
+                <option value="level_sensor_out_of_range">Level out of range</option>
+                <option value="pump_stuck_on">Pump stuck on</option>
+                <option value="heater_stuck_on">Heater stuck on</option>
+              </select>
+              <div class="button-pair">
+                <button type="submit" data-enabled="true">Inject</button
+                ><button type="submit" data-enabled="false" class="secondary">
+                  Clear selected
+                </button>
+              </div>
+            </form>
+            <div class="control-card stop-card">
+              <h3>Safe action</h3>
+              <p>
+                Requests stopped mode. Physical fault overrides remain visible as actual output
+                differences.
+              </p>
+              <button id="safe-stop" type="button">Request stopped mode</button
+              ><button id="clear-faults" class="secondary" type="button">
+                Clear all injected faults
+              </button>
             </div>
-          </form>
-          <div class="control-card stop-card">
-            <h3>Safe action</h3>
-            <p>
-              Requests stopped mode. Physical fault overrides remain visible as actual output
-              differences.
-            </p>
-            <button id="safe-stop" type="button">Request stopped mode</button
-            ><button id="clear-faults" class="secondary" type="button">
-              Clear all injected faults
-            </button>
           </div>
-        </div>
+        </fieldset>
         <p id="command-status" class="command-status" role="status" aria-live="polite">
           Enter the local token before issuing commands.
         </p>
@@ -277,6 +334,10 @@
     </main>
     <footer>
       <p>Harbor Twin Lab · Synthetic data · No external equipment</p>
+      <p>
+        Created by <a href="https://github.com/JasonStys">Jason Stys</a> ·
+        <a href="https://www.linkedin.com/in/jason-stys-31b30b351/">Contact</a>
+      </p>
       <a href="/api/v1/health">Gateway health</a>
     </footer>
   </body>
