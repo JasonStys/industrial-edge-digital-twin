@@ -5,6 +5,9 @@
  */
 
 import { defineConfig, devices } from "@playwright/test";
+const port = Number(process.env.TWIN_E2E_PORT ?? 8080);
+if (!Number.isSafeInteger(port) || port < 1024 || port > 65535)
+  throw new Error("Invalid TWIN_E2E_PORT");
 
 export default defineConfig({
   testDir: "hmi/test",
@@ -15,7 +18,10 @@ export default defineConfig({
   retries: process.env.CI === undefined ? 0 : 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:8080",
+    ...(process.env.TWIN_BROWSER_CHANNEL === undefined
+      ? {}
+      : { channel: process.env.TWIN_BROWSER_CHANNEL }),
+    baseURL: `http://127.0.0.1:${port}`,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },

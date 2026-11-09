@@ -1,0 +1,64 @@
+{
+  "report_version": 1,
+  "repository": "industrial-edge-digital-twin",
+  "date": "2026-11-09",
+  "environment": {
+    "os": "Windows x64",
+    "node": "24",
+    "pnpm": "11.25",
+    "cpp": "MSVC19.51",
+    "native_configuration": "Debug"
+  },
+  "native": {
+    "rebuilt_current_sources": true,
+    "ctest_targets_passed": 1,
+    "named_cpp_cases_passed": 15
+  },
+  "typescript": {
+    "passed": 41,
+    "coverage_percent": {
+      "statements": 88.43,
+      "branches": 90.15,
+      "functions": 91.93,
+      "lines": 88.54
+    },
+    "trace_coverage_percent": { "lines": 98.48, "branches": 98.07, "functions": 100 }
+  },
+  "browser": {
+    "passed": 20,
+    "actual_local_channel": "Microsoft Edge, Chromium-family",
+    "profiles": ["desktop", "Pixel7"],
+    "selected_axe_violations": 0,
+    "extreme_value_overflow": false,
+    "actual_fault_capture_download": true
+  },
+  "quality": {
+    "format_lint_types_build": "passed",
+    "indexed_sources": 36,
+    "repository_policy": "passed",
+    "full_graph_known_vulnerabilities": 0
+  },
+  "performance": {
+    "runs": 5,
+    "steps_per_run": 10000,
+    "configuration": "Debug",
+    "median_ms": 645.09,
+    "median_steps_per_second": 15502,
+    "hard_real_time_claim": false
+  },
+  "limits": {
+    "capture_samples": 1200,
+    "live_trend_samples": 90,
+    "trace_bytes": 2097152,
+    "playback_samples_per_second": 5,
+    "persistence": "explicit local JSON export only",
+    "import_authenticity": "not authenticated"
+  },
+  "limitations": [
+    "Local simulation only; no physical process control",
+    "No shared-user identity/authenticated historian",
+    "Hosted Linux sanitizer/Node22/24/bundled Chromium checks pending coordinator",
+    "Imported-trace tests do not establish real measurement provenance",
+    "Defensive export-size rejection not artificially mocked for coverage"
+  ]
+}

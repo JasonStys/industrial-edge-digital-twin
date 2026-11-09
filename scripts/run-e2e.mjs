@@ -7,16 +7,27 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
+import net from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, URL } from "node:url";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
+const port = Number(process.env.TWIN_E2E_PORT ?? 8080);
+if (!Number.isSafeInteger(port) || port < 1024 || port > 65535)
+  throw new Error("Invalid TWIN_E2E_PORT");
+const origin = `http://127.0.0.1:${port}`;
+// Refuse an occupied port before starting a gateway or probing any HTTP listener.
+const reservation = net.createServer();
+await new Promise((resolve, reject) =>
+  reservation.once("error", reject).listen(port, "127.0.0.1", resolve),
+);
+await new Promise((resolve) => reservation.close(resolve));
 const server = spawn(process.execPath, [path.join(repositoryRoot, "gateway", "dist", "main.js")], {
   cwd: repositoryRoot,
   env: {
     ...process.env,
     NODE_ENV: "test",
-    PORT: "8080",
+    PORT: String(port),
     TWIN_COMMAND_TOKEN: "local-demo-token",
   },
   stdio: ["ignore", "pipe", "inherit"],
@@ -37,8 +48,12 @@ async function waitForServer() {
       throw new Error(`test gateway exited during startup: ${serverOutput}`);
     }
     try {
-      const response = await globalThis.fetch("http://127.0.0.1:8080/api/v1/health");
-      if (response.ok) return;
+      if (serverOutput.includes(`Edge twin available at ${origin}`)) {
+        const response = await globalThis.fetch(`${origin}/api/v1/health`, {
+          signal: globalThis.AbortSignal.timeout(1000),
+        });
+        if (response.ok && server.exitCode === null) return;
+      }
     } catch {
       // The listener is not ready yet; retry within the explicit deadline.
     }

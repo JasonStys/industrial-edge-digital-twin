@@ -592,3 +592,36 @@ footer a {
     transition-duration: 0.01ms !important;
   }
 }
+/* Recorded telemetry remains distinct from live command authority. */
+#command-surface {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.trace-panel {
+  margin-block: 1.5rem;
+  min-width: 0;
+}
+.trace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+.trace-actions input {
+  max-width: 100%;
+}
+#trace-position {
+  width: 100%;
+}
+#trace-error:not(:empty) {
+  border-left: 4px solid #9e3700;
+  padding: 0.75rem;
+}
+#command-surface:disabled {
+  opacity: 0.7;
+}
+.dashboard[hidden] {
+  display: none;
+}

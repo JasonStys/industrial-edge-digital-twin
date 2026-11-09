@@ -1,29 +1,31 @@
 {
-  "validatedAt": "2026-09-16T18:35:00-07:00",
+  "validatedAt": "2026-11-09T23:16:31.988924+00:00",
   "cpp": {
     "compiler": "MSVC 19.51",
-    "configuration": "Release",
+    "configuration": "Debug",
     "passed": 15,
     "failed": 0
   },
   "typescript": {
-    "passed": 34,
+    "passed": 41,
     "failed": 0,
     "coverage": {
-      "statementsPercent": 85.36,
-      "branchesPercent": 87.23,
-      "functionsPercent": 90.0,
-      "linesPercent": 85.58
+      "statementsPercent": 88.43,
+      "branchesPercent": 90.15,
+      "functionsPercent": 91.93,
+      "linesPercent": 88.54
     }
   },
   "browser": {
-    "passed": 12,
+    "passed": 20,
     "failed": 0,
     "projects": ["desktop-chromium", "mobile-chromium"],
-    "axeSelectedTagViolations": 0
+    "axeSelectedTagViolations": 0,
+    "actualLocalChannel": "Microsoft Edge, Chromium-family"
   },
   "productionDependencyAudit": {
     "knownVulnerabilities": 0,
-    "auditLevel": "high"
+    "auditLevel": "low",
+    "scope": "full graph"
   }
 }

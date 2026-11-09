@@ -7,19 +7,23 @@ Let:
 - \(S\) be connected SSE clients, capped at 32.
 - \(L\) be input line bytes, capped at 512 in C++ and 65,536 for engine output.
 - \(H\) be HMI trend samples, capped at 90.
+- \(R\) be recorded snapshots, capped at 1,200; imported/exported JSON is capped at 2 MiB.
 
-| Operation                   | Time                  | Additional space           | Bound/reasoning                             |
-| --------------------------- | --------------------- | -------------------------- | ------------------------------------------- |
-| One process step            | O(1)                  | O(1)                       | Fixed number of mass/energy terms           |
-| Controller update           | O(1)                  | O(1)                       | Fixed signals, alarms, and interlocks       |
-| Engine command lookup       | Average O(1)          | O(C)                       | Hash map plus FIFO eviction                 |
-| Command eviction            | Average O(1)          | O(1)                       | Deque front plus hash erase                 |
-| Line parsing                | O(L)                  | O(L)                       | At most 512 bytes and 16 tokens             |
-| JSON serialization          | O(1) for fixed schema | O(1) bounded buffer growth | Fixed field count                           |
-| Gateway command correlation | Average O(1)          | O(P)                       | Map keyed by command ID                     |
-| SSE broadcast               | O(S)                  | O(1) per event             | At most 32 clients; slow clients closed     |
-| MQTT enqueue                | O(1)                  | O(1)                       | One pending snapshot replaces the prior one |
-| HMI trend update            | O(H)                  | O(H)                       | Shift/map of at most 90 points              |
+| Operation                   | Time                  | Additional space                  | Bound/reasoning                                                            |
+| --------------------------- | --------------------- | --------------------------------- | -------------------------------------------------------------------------- |
+| One process step            | O(1)                  | O(1)                              | Fixed number of mass/energy terms                                          |
+| Controller update           | O(1)                  | O(1)                              | Fixed signals, alarms, and interlocks                                      |
+| Engine command lookup       | Average O(1)          | O(C)                              | Hash map plus FIFO eviction                                                |
+| Command eviction            | Average O(1)          | O(1)                              | Deque front plus hash erase                                                |
+| Line parsing                | O(L)                  | O(L)                              | At most 512 bytes and 16 tokens                                            |
+| JSON serialization          | O(1) for fixed schema | O(1) bounded buffer growth        | Fixed field count                                                          |
+| Gateway command correlation | Average O(1)          | O(P)                              | Map keyed by command ID                                                    |
+| SSE broadcast               | O(S)                  | O(1) per event                    | At most 32 clients; slow clients closed                                    |
+| MQTT enqueue                | O(1)                  | O(1)                              | One pending snapshot replaces the prior one                                |
+| HMI trend update            | O(H)                  | O(H)                              | Shift/map of at most 90 points                                             |
+| Recorded sample insertion   | O(1) for fixed schema | O(1) per insertion, O(R) retained | Circular overwrite, duplicate-envelope suppression, exact eviction counter |
+| Trace export/import         | O(R) / O(bytes)       | O(R), bounded by 2 MiB            | Compact strict-schema JSON, defensive copies, no tokens                    |
+| Recorded trend/review       | O(R)                  | O(R)                              | Latest increasing-time segment; no reset discontinuity is connected        |
 
 The plant loop performs no unbounded container growth. The gateway's long-lived collections all have
 explicit caps or remove entries on close/response. HTTP body size and process-line size are separate

@@ -5,3 +5,5 @@ minimumReleaseAgeExclude:
   - fastify@5.12.5
   - mqtt@5.16.0
   - prettier@3.9.7
+overrides:
+  "minimatch@>=7 <11.0.1": "11.0.1"

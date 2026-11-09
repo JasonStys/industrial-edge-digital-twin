@@ -21,14 +21,14 @@ Linux CI enables AddressSanitizer and UndefinedBehaviorSanitizer. Windows CI com
 
 ## TypeScript cases
 
-Vitest runs 34 unit and integration tests. Coverage thresholds are enforced globally at 85%
+Vitest runs 41 unit and integration tests. Coverage thresholds are enforced globally at 85%
 statements, 80% branches, 85% functions, and 85% lines. The real-process tests start the C++ engine,
 validate the first snapshot, observe fixed-step telemetry, correlate commands, and exercise both the
 configured queue bound and engine-level duplicate semantics.
 
 ## Browser cases
 
-Six scenarios run once at desktop size and once with a Pixel 7 profile:
+Ten scenarios run once at desktop size and once with a Pixel 7 profile:
 
 1. Live telemetry plus axe rules tagged WCAG 2 A/AA, 2.1 AA, and 2.2 AA.
 2. In-memory token entry and operating-mode change.
@@ -36,6 +36,14 @@ Six scenarios run once at desktop size and once with a Pixel 7 profile:
 4. Requested/actual mismatch under a stuck pump.
 5. Keyboard skip navigation.
 6. Mobile reflow with no horizontal page overflow.
+7. Real native-engine fault capture, JSON download, time-aligned replay, requested/actual quality
+   evidence and no commands while reviewing.
+8. Imported quality-transition trace, clear invalid-file rejection, preservation of prior review and
+   superseded asynchronous import cancellation.
+9. Command-network failure remains an explicit unknown outcome without an uncaught exception or
+   presumed success.
+10. Imported review without any live sample hides historical readings when returning to live;
+    extreme sensor readouts stay compact and fit the viewport.
 
 The stateful scenarios use one worker because both viewport projects intentionally share one twin
 instance. Serialization prevents one project from clearing another project's injected fault.
@@ -55,9 +63,13 @@ serialization cost.
 - All tests pass on clean checkout.
 - No compiler warning is accepted.
 - TypeScript coverage meets configured thresholds.
-- Production dependency audit has no high/critical finding.
+- Full dependency graph audit has no moderate/high/critical finding.
 - Browser suite reports zero violations for its selected axe tags.
 - Build output remains within documented budgets.
 - Generated symbol index, internal links, file headers, and action pinning are current.
 
 See the measured [validation report](reports/validation-report.md).
+
+The [practical-workflow report](reports/practical-workflows-2026-11-09.md) records current local
+results and scope. Live capture and playback use the actual C++ process/gateway. Imported-trace
+fixtures test presentation/validation contracts, not measurements from physical equipment.
