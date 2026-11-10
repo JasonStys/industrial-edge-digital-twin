@@ -70,13 +70,15 @@ interfaces/functions receive local API comments. Exact declaration lines are reg
 
 ## Scripts and infrastructure
 
-| File                                | Responsibility                                                       |
-| ----------------------------------- | -------------------------------------------------------------------- |
-| `scripts/run-e2e.mjs`               | Owns and reaps gateway/engine during browser tests                   |
-| `scripts/generate-symbol-index.mjs` | Generates exact source declaration line links                        |
-| `scripts/check-repository.mjs`      | Checks headers, docs, links, pins, exact versions, and naming policy |
-| `scripts/benchmark-engine.mjs`      | Measures five bounded 10,000-step campaigns                          |
-| `infra/mosquitto.conf`              | Loopback demonstration broker behavior                               |
+| File                                 | Responsibility                                                                    |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| `scripts/run-e2e.mjs`                | Owns and reaps gateway/engine during browser tests                                |
+| `scripts/generate-symbol-index.mjs`  | Generates exact source declaration line links                                     |
+| `scripts/check-repository.mjs`       | Checks headers, docs, links, pins, exact versions, and naming policy              |
+| `scripts/repository-reader.mjs`      | Descriptor-bound regular-file policy reads with a hard 2,000,000-byte text budget |
+| `scripts/repository-reader.test.mjs` | Real-file boundary, replacement, growth, partial-read and I/O-error regressions   |
+| `scripts/benchmark-engine.mjs`       | Measures five bounded 10,000-step campaigns                                       |
+| `infra/mosquitto.conf`               | Loopback demonstration broker behavior                                            |
 
 ## Documentation and reports
 

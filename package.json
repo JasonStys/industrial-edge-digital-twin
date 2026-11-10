@@ -23,9 +23,10 @@
     "symbols": "node scripts/generate-symbol-index.mjs",
     "symbols:check": "node scripts/generate-symbol-index.mjs --check",
     "test": "vitest run --coverage",
+    "test:repository": "node --test scripts/repository-reader.test.mjs",
     "test:e2e": "pnpm run build && node scripts/run-e2e.mjs",
     "typecheck": "tsc -p gateway/tsconfig.json --noEmit && tsc -p gateway/test/tsconfig.json --noEmit && tsc -p hmi/tsconfig.json --noEmit && tsc -p hmi/test/tsconfig.json --noEmit && tsc -p tsconfig.json --noEmit",
-    "validate:web": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm symbols:check && pnpm repository:check"
+    "validate:web": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:repository && pnpm build && pnpm symbols:check && pnpm repository:check"
   },
   "dependencies": {
     "@fastify/static": "10.1.10",

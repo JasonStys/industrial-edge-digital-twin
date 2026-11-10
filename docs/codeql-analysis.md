@@ -50,6 +50,12 @@ extraction coverage visible. An HTTP403/404, incomplete listing, missing categor
 is unavailable/incomplete evidence, never zero clearance. A PR analysis belongs to the PR/merge ref
 and must not be represented as a completed main analysis.
 
+GitHub may apply diff-informed result filtering to PR analyses. Therefore a PR with zero results
+does not establish a clean full-source baseline. The first full main scan reported a repository
+file-reading race despite the earlier PR results; the
+[finding and regression report](reports/codeql-race-2026-11-09.md) records that observation and the
+descriptor-bound correction without claiming closure before another full main scan.
+
 Investigate a reported path and line in the real input-to-sink flow, reproduce a reachable issue
 with an independent negative test, fix the boundary, then rerun its existing tests and actual
 CodeQL. This project does not automatically dismiss findings or require a false zero result.

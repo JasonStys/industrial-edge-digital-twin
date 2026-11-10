@@ -200,6 +200,10 @@ See the complete [file reference](docs/file-reference.md) and generated
 See the [latest maintenance audit](docs/reports/maintenance-audit-2026-09-18.md) for hosted
 verification and dependency compatibility decisions.
 
+The [first full-main CodeQL finding report](docs/reports/codeql-race-2026-11-09.md) explains a
+repository-validator file-reading race and its descriptor-bound, byte-limited correction. Actual
+main-branch findings are checked separately from a successful scan job and PR-filtered results.
+
 ## License and contribution
 
 The code is available under the [MIT License](LICENSE). Please read
