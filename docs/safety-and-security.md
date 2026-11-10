@@ -55,3 +55,12 @@ or real process traces in an issue.
 
 General OT security context is available in
 [NIST SP 800-82 Rev. 3](https://csrc.nist.gov/pubs/sp/800/82/r3/final).
+
+## Code scanning and its limits
+
+[CodeQL](codeql-analysis.md) now has explicit supported-language lanes and immutable Actions pins.
+It complements dependency advisories and independent runtime tests; a green workflow is not a
+zero-findings assertion. Review actual main-branch alerts and analysis source/categories, and
+keep403/404/no-analysis states distinct. No blanket query/path exclusions or alert suppression is
+introduced. CI scanning does not authorize real-device access, production signing material, external
+services or an expanded application trust boundary.
