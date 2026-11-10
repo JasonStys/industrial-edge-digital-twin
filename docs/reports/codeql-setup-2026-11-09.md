@@ -26,6 +26,27 @@ an owned test port, with no skipped/retried cases. The full moderate dependency 
 vulnerabilities and the bounded five-run nominal benchmark measured53851steps/second under local
 conditions. These observations are not a local CodeQL execution claim.
 
+## Observed first hosted analysis
+
+The real
+[PR20 CodeQL workflow](https://github.com/JasonStys/industrial-edge-digital-twin/actions/runs/42764635606)
+completed all three lanes with CodeQL2.27.4. This observation belongs to source head
+`4f22692f053ad3b2c190a0cdaa1cbe566fb6accf` and GitHub's analyzed PR-merge commit
+`6d876f1bf0b14179325248eb6def2ee2d3290a52` at `refs/pull/20/merge`, before this report-only
+follow-up. It is not a main-branch analysis assertion.
+
+| Category                | Actual analysis ID | Rules executed | Results |
+| ----------------------- | ------------------ | -------------- | ------- |
+| `c-cpp`                 | `2132784699`       | 95             | 0       |
+| `javascript-typescript` | `2132782163`       | 103            | 0       |
+| `actions`               | `2132781429`       | 23             | 0       |
+
+The API returned an empty analysis error for every category and a complete empty open-alert listing
+for that PR ref. No finding was dismissed, suppressed, excluded or relabeled to reach that result.
+Current main must be scanned and its actual alerts inspected separately after merge; a report-only
+commit also requires its own fresh PR checks. Zero results are time/tool/language-specific
+observations, not proof of no vulnerabilities.
+
 ## Validation scope
 
 Local compiler/runtime tests, repository docs/index checks and workflow syntax are separate from
