@@ -1,7 +1,7 @@
 {
   "checkedAt": "generated-during-validation",
   "checks": {
-    "codeFilesWithHeaders": 38,
+    "codeFilesWithHeaders": 40,
     "markdownFilesChecked": 19,
     "pinnedWorkflowFiles": 2,
     "requiredDocuments": 10

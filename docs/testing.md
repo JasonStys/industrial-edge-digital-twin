@@ -83,3 +83,18 @@ Existing runtime/property/fault/browser/sanitizer and dependency gates remain un
 validation is not an executed scan; uploaded analyses and open findings must be inspected at the
 exact current-main SHA. Missing or unauthorized analysis is reported as unavailable rather than
 passing. Real findings require source-level triage and a regression reproducing the actual boundary.
+
+## Repository reader regressions
+
+Run `pnpm test:repository` for seven native Node test cases using real private temporary files.
+These checks run in both Node 22/24 CI lanes and `pnpm validate:web`, separately from the 41
+gateway/HMI tests and their existing coverage floors. They exercise empty and multibyte data, the
+inclusive 2,000,000-byte limit, pathname replacement after opening, actual growth between descriptor
+inspection and read, short reads, I/O failures and invalid budgets. The growth test appends real
+bytes after real descriptor metadata is captured; its independent read accounting requires exactly
+limit+1 bytes, rather than trusting the stale size. No test depends on timing, symlink privileges or
+a simulated scanner result.
+
+See [the first-main finding and correction](reports/codeql-race-2026-11-09.md). This change does not
+modify the simulation, gateway, trace formats or command authorization. Their existing native,
+coverage and real-browser acceptance checks remain required.

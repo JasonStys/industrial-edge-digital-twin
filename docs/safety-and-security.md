@@ -64,3 +64,18 @@ zero-findings assertion. Review actual main-branch alerts and analysis source/ca
 keep403/404/no-analysis states distinct. No blanket query/path exclusions or alert suppression is
 introduced. CI scanning does not authorize real-device access, production signing material, external
 services or an expanded application trust boundary.
+
+## Descriptor-bound repository policy reads
+
+The first full main-branch CodeQL scan reported `js/file-system-race` at the naming-policy reader's
+separate pathname metadata check/read. The corrected reader opens once, uses metadata from that
+descriptor, reads at most 2,000,001 bytes from that same descriptor, and closes in a `finally`
+block. More than 2,000,000 bytes retains the explicit large-file exclusion; `.lock` files retain
+their existing exclusion. I/O errors propagate instead of becoming empty content.
+
+A replaced pathname cannot redirect an already-open descriptor. A file that grows after the size
+check cannot expand the read budget. This is not a transactional snapshot against concurrent writes
+to the same file, a no-symlink guarantee, or a sandbox against an attacker controlling the
+repository/OS. The repository validator runs on a trusted checkout. See the
+[Node FileHandle API](https://nodejs.org/docs/latest-v22.x/api/fs.html#class-filehandle) and
+[finding report](reports/codeql-race-2026-11-09.md) for the exact observation and limits.

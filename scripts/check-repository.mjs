@@ -4,10 +4,11 @@
  * @details Main variables: repositoryRoot, failures, codeFiles, markdownFiles, and reportPath.
  */
 
-import { access, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { access, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
+import { readPolicyText } from "./repository-reader.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const failures = [];
@@ -109,9 +110,9 @@ for (const section of ["dependencies", "devDependencies"]) {
 // Construct protected names from fragments so the public repository does not contain the names itself.
 const protectedPatterns = [new RegExp(["op", "to"].join("") + "\\s*" + "22", "iu")];
 for (const file of files) {
-  const info = await stat(file);
-  if (info.size > 2_000_000 || path.extname(file) === ".lock") continue;
-  const source = await readFile(file, "utf8").catch(() => "");
+  if (path.extname(file) === ".lock") continue;
+  const source = await readPolicyText(file);
+  if (source === null) continue;
   if (protectedPatterns.some((pattern) => pattern.test(source))) {
     failures.push(`${path.relative(repositoryRoot, file)} contains a protected employer reference`);
   }
