@@ -50,11 +50,16 @@ test("an open descriptor keeps its source after the pathname is replaced", async
   await fixture(async (directory) => {
     const file = path.join(directory, "source.txt");
     const moved = path.join(directory, "original.txt");
+    const replacement = path.join(directory, "replacement.txt");
     await writeFile(file, "original descriptor");
+    await writeFile(replacement, "replacement pathname", { flag: "wx" });
+    await assert.rejects(writeFile(replacement, "must not clobber", { flag: "wx" }), {
+      code: "EEXIST",
+    });
     const handle = await open(file, "r");
     try {
       await rename(file, moved);
-      await writeFile(file, "replacement pathname");
+      await rename(replacement, file);
       assert.equal(await readBoundedHandle(handle), "original descriptor");
       assert.equal(await readPolicyText(file), "replacement pathname");
     } finally {
@@ -67,7 +72,7 @@ test("actual growth between fstat and read cannot bypass the byte cap", async ()
   await fixture(async (directory) => {
     const file = path.join(directory, "growing.txt");
     await writeFile(file, "small");
-    const handle = await open(file, "r");
+    const handle = await open(file, "r+");
     let observedSize = 0;
     let bytesRequested = 0;
     try {
@@ -76,7 +81,7 @@ test("actual growth between fstat and read cannot bypass the byte cap", async ()
         async stat() {
           const info = await handle.stat();
           observedSize = info.size;
-          await appendFile(file, "x".repeat(64));
+          await handle.write("x".repeat(64), info.size, "utf8");
           return info;
         },
         async read(buffer, offset, length, position) {
@@ -87,7 +92,7 @@ test("actual growth between fstat and read cannot bypass the byte cap", async ()
       assert.equal(await readBoundedHandle(interleaved, 32), null);
       assert.equal(observedSize, 5);
       assert.equal(bytesRequested, 33);
-      assert.equal((await readFile(file)).length, 69);
+      assert.equal((await handle.stat()).size, 69);
     } finally {
       await handle.close();
     }
@@ -125,7 +130,8 @@ test("missing files, nonregular inputs and read errors fail instead of empty evi
     const handle = await open(file, "r");
     await handle.close();
     await assert.rejects(readBoundedHandle(handle), { code: "EBADF" });
-    const interrupted = await open(file, "r");
+    const interrupted = await open(path.join(directory, "interrupted.txt"), "wx+");
+    await interrupted.write("real source");
     const closedBeforeRead = {
       async stat() {
         const info = await interrupted.stat();

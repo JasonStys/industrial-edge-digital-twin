@@ -54,6 +54,13 @@ the unchanged suite passed with scoped loopback permission. The initial dependen
 resolve its registry in the sandbox and was stopped, then passed with scoped network access. Neither
 unavailable attempt was counted as passing, and no OS/browser protection was weakened.
 
+The first repair PR scan also identified three pathname-based operations in the new race-test
+fixture itself. These fixtures now create the replacement with exclusive `wx` semantics, append and
+inspect growth through the same real descriptor, and create a separate exclusive interrupted-read
+file. The tests still exercise actual rename/growth/error interleavings; an independent `EEXIST`
+assertion proves replacement creation cannot clobber an existing file. No fixture path or scanner
+rule is excluded from analysis.
+
 The first-main alert above remains a real historical observation. Only a new exact-main full scan
 after merge can establish automatic closure; a PR check or this source change alone cannot claim
 that it has been resolved. No release asset is replaced by this source-only correction.
