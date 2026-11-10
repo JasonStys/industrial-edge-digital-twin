@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "project": "industrial-edge-digital-twin",
+  "author": "Jason Stys",
+  "editionDate": "2026-11-09",
+  "sourceBaseline": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+  "sourceUrl": "https://github.com/JasonStys/industrial-edge-digital-twin/tree/b1562a941fd809b9dd58fcee1fec55081e327f9d",
+  "functionalEvidenceBaseline": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+  "evidenceObservedAt": "2026-11-10T06:42:18.583808+00:00",
+  "workflowEvidence": [
+    {
+      "conclusion": "success",
+      "databaseId": 42769791594,
+      "event": "push",
+      "headSha": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+      "name": "CI",
+      "status": "completed",
+      "url": "https://github.com/JasonStys/industrial-edge-digital-twin/actions/runs/42769791594"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42769791303,
+      "event": "push",
+      "headSha": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+      "name": "CodeQL",
+      "status": "completed",
+      "url": "https://github.com/JasonStys/industrial-edge-digital-twin/actions/runs/42769791303"
+    }
+  ],
+  "summary": "Capture and replay synchronized signals, requested/actual outputs, quality, faults and alarms; import/export bounded traces and scrub time-aligned trends with commands blocked in review.",
+  "rationale": "Creates a practical simulated-process investigation workflow with recorded and live state clearly distinguished.",
+  "limitations": [
+    "Local simulated plant, not physical control or a certified process model.",
+    "Trace capture is bounded page memory with explicit export, not a durable authenticated historian.",
+    "Imported schema-valid traces do not establish provenance or physical consistency; review mode blocks commands rather than controlling equipment."
+  ],
+  "documents": [
+    {
+      "filename": "project-guide.docx",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "bytes": 44842,
+      "sha256": "284e7aabcd81ce5ee1d48f06857b74871bb6ea4fb8f4bfa448529dd601c356f9",
+      "sourceBaseline": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+      "visualReview": {
+        "approved": true,
+        "method": "Every rendered page individually viewed at readable original resolution",
+        "pageCount": 6,
+        "renderedPageSha256": {
+          "page-1.png": "94baabd5469d5b6f2a50f4b4d0a75172d86cd252a2eea244fdd4b0fa10e50458",
+          "page-2.png": "5cb6230f0a999a23a71a2ec52aed68ae88f39baf332601b7c00c8d3a57116704",
+          "page-3.png": "67837c8d61c480f63f45532f6af390f4a7a1775ac48351866bbe2902fd43f9c5",
+          "page-4.png": "6993d3ebf32e7abffbc6ec6773180635f9cba7201c43f0087c9ff9db9cbca5ce",
+          "page-5.png": "12b630cdb8c74bdec12fda70c071f27813ed356435ca8f78e90fb11d6798919d",
+          "page-6.png": "7cb26b1c86d86a4f34bd897ff4409a5030877a392e038a025c5e9e72859c3e2f"
+        }
+      }
+    },
+    {
+      "filename": "validation-review.docx",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "bytes": 45828,
+      "sha256": "eae23ec567cc13039b3acbe54c7fa61e7bb93ca6b94d2a37bc8ea6ddfe1b4842",
+      "sourceBaseline": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+      "visualReview": {
+        "approved": true,
+        "method": "Every rendered page individually viewed at readable original resolution",
+        "pageCount": 6,
+        "renderedPageSha256": {
+          "page-1.png": "8de6f43a07ce141395570b67632ae0f6ca346a0f9370b54dadb38a52f894f7e7",
+          "page-2.png": "c582e816b32f02744dff150488afe054cb7e97f2451df37140074fb85852a4cc",
+          "page-3.png": "29c896df6faa1dd16b628ceea51776b88fbf10cc3e4a5500771e309d34631801",
+          "page-4.png": "ce4865951425e490cc9ee25bbb6ca11457bf407aa3736fa34638ecec85e3bb61",
+          "page-5.png": "d5d651d55591faad3154420b2e83e93b04ea5e62f43defb967a2b255dcde5cba",
+          "page-6.png": "971a0874ed9522cbd488b4841b956e8c37cd8945359389ea53fd39ea765d0624"
+        }
+      }
+    },
+    {
+      "filename": "validation-evidence.xlsx",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "bytes": 7422,
+      "sha256": "4b0adcd8daf0874ccce286de0fe3008bec7b3047a5bda428a2f56056911aa646",
+      "sourceBaseline": "b1562a941fd809b9dd58fcee1fec55081e327f9d",
+      "visualReview": {
+        "approved": true,
+        "tabsReviewed": ["Workflow evidence", "Test sources"],
+        "previewSha256": {
+          "workflow-evidence.png": "a4e5f7f9935f496a3f4fc648771059a57a8464c88d036cb1a17bc568471f3bd7",
+          "test-sources.png": "00ded71c94574f36b6bb76ce104f6565d82b276a6b988167975f47c2167ff966"
+        },
+        "tables": [
+          {
+            "name": "WorkflowEvidence",
+            "range": "A7:D9",
+            "autoFilter": true
+          },
+          {
+            "name": "TestSources",
+            "range": "A7:C18",
+            "autoFilter": true
+          }
+        ],
+        "formulaCount": 4,
+        "failureSensitivityReceiptPassed": true,
+        "formulaErrors": 0
+      }
+    }
+  ],
+  "scope": "Reviewed documentation editions of the cited source. Checksums identify bytes, not authorship. Historical measurements retain their own dates; integration CI must be checked separately."
+}
