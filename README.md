@@ -208,3 +208,14 @@ main-branch findings are checked separately from a successful scan job and PR-fi
 
 The code is available under the [MIT License](LICENSE). Please read
 [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before opening a change.
+
+## Documentation editions
+
+Start with the [organized handbook](docs/handbook.md) for current usage, design, security and test
+guidance. Reviewed downloadable editions: [project-guide.docx](docs/reports/project-guide.docx) ·
+[validation-review.docx](docs/reports/validation-review.docx) ·
+[validation-evidence.xlsx](docs/reports/validation-evidence.xlsx).
+
+[Publication identities and source scope](docs/reports/publications.json) ·
+[Documentation validation record](docs/reports/documentation-refresh-2026-11-09.md). Historical
+results retain their own tested revision and date.
