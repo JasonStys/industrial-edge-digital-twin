@@ -84,3 +84,12 @@ interfaces/functions receive local API comments. Exact declaration lines are reg
 sources, ADRs, exact symbol locations, and the current validation report. `reports/` contains the
 machine-readable repository check, performance samples, and committed test summary; detailed local
 coverage HTML remains untracked.
+
+## CodeQL setup files
+
+- `.github/workflows/codeql.yml`: pinned, least-privilege supported-language extraction,
+  security-extended queries and actual SARIF upload.
+- `docs/codeql-analysis.md`: diagnosed coverage gap, language/build modes, trigger/permission
+  contract and exact-source findings review.
+- `docs/reports/codeql-setup-2026-11-09.md`: point-in-time local validation and explicit
+  hosted-analysis limits.

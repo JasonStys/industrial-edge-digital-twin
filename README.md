@@ -8,6 +8,12 @@ browser HMI.
 This is a synthetic educational system. It is not a safety controller, a certified process model, or
 software for direct connection to physical equipment.
 
+[![CodeQL](https://github.com/JasonStys/industrial-edge-digital-twin/actions/workflows/codeql.yml/badge.svg)](https://github.com/JasonStys/industrial-edge-digital-twin/actions/workflows/codeql.yml)
+
+The [CodeQL analysis contract](docs/codeql-analysis.md) adds traced C++20, JavaScript/TypeScript and
+Actions security-extended analysis. Workflow completion, uploaded analysis and open findings are
+reviewed separately; unavailable analysis is not a clean result.
+
 ## Why this project exists
 
 Normal dashboards often show only a number. This project treats an industrial signal as a bundle:

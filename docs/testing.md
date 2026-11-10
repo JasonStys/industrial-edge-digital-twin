@@ -73,3 +73,13 @@ See the measured [validation report](reports/validation-report.md).
 The [practical-workflow report](reports/practical-workflows-2026-11-09.md) records current local
 results and scope. Live capture and playback use the actual C++ process/gateway. Imported-trace
 fixtures test presentation/validation contracts, not measurements from physical equipment.
+
+## CodeQL source-security evidence
+
+The separate [CodeQL workflow](../.github/workflows/codeql.yml) creates genuine supported-language
+databases and uses security-extended queries. Read [the analysis contract](codeql-analysis.md) for
+each extraction mode and [the setup report](reports/codeql-setup-2026-11-09.md) for observations.
+Existing runtime/property/fault/browser/sanitizer and dependency gates remain unchanged. Syntax
+validation is not an executed scan; uploaded analyses and open findings must be inspected at the
+exact current-main SHA. Missing or unauthorized analysis is reported as unavailable rather than
+passing. Real findings require source-level triage and a regression reproducing the actual boundary.

@@ -1,11 +1,11 @@
 {
   "benchmark": "fixed-step nominal simulation with JSON serialization discarded by the parent",
-  "engine": "build/twin-engine.exe",
-  "measuredAt": "2026-11-09T23:09:36.623Z",
+  "engine": "build-release/codeql-local/twin-engine.exe",
+  "measuredAt": "2026-11-10T05:47:14.425Z",
   "runs": 5,
   "stepsPerRun": 10000,
   "simulatedSecondsPerRun": 1000,
-  "samplesMs": [589.112, 639.989, 645.09, 645.763, 662.274],
-  "medianMs": 645.09,
-  "medianStepsPerSecond": 15502
+  "samplesMs": [123.653, 151.001, 185.698, 193.383, 194.973],
+  "medianMs": 185.698,
+  "medianStepsPerSecond": 53851
 }
