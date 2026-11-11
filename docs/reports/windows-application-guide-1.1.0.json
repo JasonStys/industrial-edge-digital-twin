@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "repository": "industrial-edge-digital-twin",
+  "runtimeVersion": "1.1.0",
+  "runtimeSource": "b93914513ccf751eab2a2c0f7a5aa8225d9fe336",
+  "createdAt": "2026-11-11T07:02:26.305Z",
+  "author": "Jason Stys",
+  "document": "windows-application-guide-1.1.0.docx",
+  "sha256": "b9905952702bc36cdbbc0822e75124bfc948f6d7175145a05affbb2df39d3110",
+  "screenshots": [
+    {
+      "file": "native-recording-review.png",
+      "sha256": "59e9fd63faad0bf4eb88f6325575664267d0e0fad6aa3496d9c041897fa38b24",
+      "width": 1772,
+      "height": 771,
+      "caption": "Recorded process samples are reviewed in the same installed digital-twin application; this is the output of the bundled C++ model."
+    },
+    {
+      "file": "native-workspace.png",
+      "sha256": "8b50cde9f4fea2c443b817d6ec1465f9b55bca9025f3f7ed4fcfde15dc53ebe9",
+      "width": 2079,
+      "height": 1407,
+      "caption": "The installed application displays the accepted workspace and its original project results using synthetic data."
+    }
+  ],
+  "snippets": [
+    {
+      "file": "desktop/main.mjs",
+      "first": 22,
+      "last": 42,
+      "sha256": "74b40d97c66d96ec17d8c3a19a0b801a600ce09860b48f574c948f23e08b85c9",
+      "url": "https://github.com/JasonStys/industrial-edge-digital-twin/blob/b93914513ccf751eab2a2c0f7a5aa8225d9fe336/desktop/main.mjs#L22"
+    }
+  ],
+  "observedTests": [
+    {
+      "name": "Real native workflows",
+      "observed": "Actual installed Electron/C++ control, fault and trace workflows passed; four samples and 420 L / 55 \u00c2\u00b0C targets persisted with the engine stopped on restart.",
+      "result": "Passed"
+    },
+    {
+      "name": "Source and security",
+      "observed": "All required main workflows for the runtime revision passed; processed CodeQL analyses reported zero open main alerts before release.",
+      "result": "Passed"
+    },
+    {
+      "name": "Distribution identity",
+      "observed": "All 2 assets matched provider/checksum identities; all 79 installed files remained unchanged during acceptance.",
+      "result": "Verified"
+    },
+    {
+      "name": "PC scope",
+      "observed": "New per-user version folder and individual links verified. Synthetic profiles only; existing data and Docker were not used or changed.",
+      "result": "Verified"
+    }
+  ],
+  "visualReview": {
+    "approved": true,
+    "reviewer": "root",
+    "ooxmlSchema": "passed",
+    "pages": {
+      "page-1.png": "af4d2661bbcdade3ba089f82844a51e0ebf4c95ca78e000d7c9deec594d0127b",
+      "page-2.png": "42027f9cf387a9dd45633723d0da51b613a63d3c1caa84f9562f8bacb573153b",
+      "page-3.png": "fc47fd1096dd44d8322b7d2791ce5bdf231dfdbb967897037bcc8c5edb587e5d",
+      "page-4.png": "248a5829c4fe9f370d06c9e1321fb74698cba3561d5d4cf15a7eec72b53d860e"
+    },
+    "scope": "All four final page contents individually inspected; only exact identical pixels carry prior inspection.",
+    "checkedUtc": "2026-11-11T07:15:13.404395+00:00"
+  }
+}
