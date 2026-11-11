@@ -53,18 +53,30 @@ async function initializeNativeWorkspace(): Promise<void> {
 async function nativeAction(operation: () => Promise<string>): Promise<void> {
   try {
     text("native-status", await operation());
-  } catch {
+  } catch (error) {
     text(
       "native-status",
-      "Operation refused or unavailable. Existing saved targets and recording were preserved.",
+      error instanceof Error
+        ? error.message
+        : "Operation refused or unavailable. Existing saved targets and recording were preserved.",
     );
   }
+}
+
+/** Explain bounded native request refusals without exposing server internals. */
+function requireNativeResponse(response: Response): void {
+  if (response.status === 429)
+    throw new Error(
+      "Too many workspace requests. Wait one minute and try again; saved data is unchanged.",
+    );
+  if (!response.ok)
+    throw new Error("Workspace operation refused. Existing saved data was preserved.");
 }
 
 element("native-save-targets").addEventListener("click", () => {
   void nativeAction(async () => {
     const response = await fetch("/desktop/targets", { method: "POST" });
-    if (!response.ok) throw new Error("Target save refused");
+    requireNativeResponse(response);
     return "Saved current targets. The next launch will start stopped with those targets.";
   });
 });
@@ -77,7 +89,7 @@ element("native-save-trace").addEventListener("click", () => {
       headers: { "Content-Type": "application/json" },
       body: serializeTrace(recording),
     });
-    if (!response.ok) throw new Error("Trace save refused");
+    requireNativeResponse(response);
     return `Saved ${recording.snapshots.length} validated review samples. This does not resume simulation state.`;
   });
 });
@@ -85,7 +97,7 @@ element("native-load-trace").addEventListener("click", () => {
   void nativeAction(async () => {
     if (recorder.active) throw new Error("Stop recording before loading");
     const response = await fetch("/desktop/trace");
-    if (!response.ok) throw new Error("No saved trace");
+    requireNativeResponse(response);
     const imported = parseTrace(await response.text());
     pausePlayback();
     recording = imported;

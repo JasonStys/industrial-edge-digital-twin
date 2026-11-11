@@ -19,6 +19,7 @@ import {
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { z } from "zod";
+import rateLimit from "@fastify/rate-limit";
 import { EngineClient } from "../../gateway/src/engine-client.js";
 import { createServer, tokenMatches } from "../../gateway/src/server.js";
 import { toProtocolCommand } from "../../gateway/src/contracts.js";
@@ -39,23 +40,23 @@ function optionalFlag(name: string): number {
 /** Read one private regular file with a real byte cap and no final symlink/hardlink. */
 export function readPrivate(path: string, limit: number): string | undefined {
   try {
-    const before = lstatSync(path);
-    if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1 || before.size > limit)
-      throw new Error("Saved workspace file is not a bounded regular file");
     const descriptor = openSync(
       path,
       constants.O_RDONLY | optionalFlag("O_NOFOLLOW") | optionalFlag("O_NONBLOCK"),
     );
     try {
       const actual = fstatSync(descriptor);
+      const named = lstatSync(path);
       if (
         !actual.isFile() ||
         actual.nlink !== 1 ||
         actual.size > limit ||
-        actual.dev !== before.dev ||
-        actual.ino !== before.ino
+        !named.isFile() ||
+        named.isSymbolicLink() ||
+        actual.dev !== named.dev ||
+        actual.ino !== named.ino
       )
-        throw new Error("Saved workspace identity changed");
+        throw new Error("Saved workspace must retain a bounded regular file identity");
       const buffer = Buffer.alloc(limit + 1);
       let length = 0;
       while (length < buffer.length) {
@@ -160,7 +161,13 @@ export async function startNative(config: NativeConfig) {
       engine,
       publisher,
       true,
-      (application) => {
+      async (application) => {
+        await application.register(rateLimit, {
+          global: true,
+          max: 120,
+          timeWindow: 60000,
+          cache: 8,
+        });
         application.addHook("onRequest", (request, reply, done) => {
           const requestedOrigin = request.headers.origin;
           const session = request.headers["x-twin-session"];
@@ -204,26 +211,34 @@ export async function startNative(config: NativeConfig) {
           settings = { schema: 1, targets };
           return { saved: true, targets, startupMode: "stopped" };
         });
-        application.get("/desktop/trace", (_request, reply) => {
-          const content = readPrivate(tracePath, TRACE_BYTES);
-          if (content === undefined)
-            return reply.code(404).send({ error: "No saved review trace" });
-          return parseTrace(content);
-        });
-        application.post("/desktop/trace", { bodyLimit: TRACE_BYTES + 1 }, (request, reply) => {
-          try {
-            const content = JSON.stringify(request.body);
-            if (Buffer.byteLength(content, "utf8") > TRACE_BYTES)
-              return reply.code(413).send({ error: "Trace exceeds2MiB" });
-            const validated = parseTrace(content);
-            writePrivate(tracePath, serializeTrace(validated));
-            return { saved: true, snapshots: validated.snapshots.length, readOnly: true };
-          } catch {
-            return reply
-              .code(400)
-              .send({ error: "Invalid trace; previous saved review preserved" });
-          }
-        });
+        application.get(
+          "/desktop/trace",
+          { config: { rateLimit: { max: 30, timeWindow: 60000 } } },
+          (_request, reply) => {
+            const content = readPrivate(tracePath, TRACE_BYTES);
+            if (content === undefined)
+              return reply.code(404).send({ error: "No saved review trace" });
+            return parseTrace(content);
+          },
+        );
+        application.post(
+          "/desktop/trace",
+          { bodyLimit: TRACE_BYTES + 1, config: { rateLimit: { max: 12, timeWindow: 60000 } } },
+          (request, reply) => {
+            try {
+              const content = JSON.stringify(request.body);
+              if (Buffer.byteLength(content, "utf8") > TRACE_BYTES)
+                return reply.code(413).send({ error: "Trace exceeds2MiB" });
+              const validated = parseTrace(content);
+              writePrivate(tracePath, serializeTrace(validated));
+              return { saved: true, snapshots: validated.snapshots.length, readOnly: true };
+            } catch {
+              return reply
+                .code(400)
+                .send({ error: "Invalid trace; previous saved review preserved" });
+            }
+          },
+        );
         application.post("/desktop/quit", (_request, reply) => {
           reply.raw.once("finish", () => config.stop());
           return { stopping: true };

@@ -8,3 +8,4 @@ pnpm-lock.yaml
 release/
 artifacts/
 desktop/dist/
+test-results/

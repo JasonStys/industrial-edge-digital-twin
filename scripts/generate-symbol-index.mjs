@@ -21,6 +21,7 @@ const skippedDirectories = new Set([
   "reports",
   "release",
   "artifacts",
+  "test-results",
 ]);
 
 /** Recursively find version-controlled source candidates in stable lexical order. */

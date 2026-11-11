@@ -46,6 +46,11 @@ destination in an external browser after navigation. No MQTT broker or live devi
 this native composition. The existing developer gateway retains its separately documented reference
 behavior; it should not be exposed as a production identity boundary.
 
+Native requests are limited to120 per minute. Saved-trace reads have a separate30-per-minute quota;
+writes allow12 per minute. Exceeding a quota returns429/Retry-After before file access, and the UI
+asks the user to wait without changing saved data. Counters are per process/IP and reset at launch;
+they are resource bounds for this single-user app, not distributed abuse prevention.
+
 This educational model is not a safety controller, calibrated physical twin or authorization to
 connect real equipment. A saved target is not a saved live-controller state. A schema-valid trace is
 not an authenticated measurement. Software already running as the same OS user and administrators

@@ -22,6 +22,7 @@ const skippedDirectories = new Set([
   ".runtime",
   "release",
   "artifacts",
+  "test-results",
 ]);
 const codeExtensions = new Set([".cpp", ".hpp", ".html", ".js", ".mjs", ".cjs", ".ts"]);
 

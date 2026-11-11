@@ -33,6 +33,7 @@
     "build:native-runtime": "tsc -p desktop/tsconfig.json"
   },
   "dependencies": {
+    "@fastify/rate-limit": "11.2.2",
     "@fastify/static": "10.1.10",
     "fastify": "5.12.8",
     "mqtt": "5.16.1",

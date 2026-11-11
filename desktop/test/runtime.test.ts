@@ -200,3 +200,52 @@ it("uses actual compiled simulation commands with private origin/session and sav
   ).toEqual({ stopping: true });
   expect(stopped).toBe(true);
 });
+
+it("rate-limits actual trace reads and writes independently before touching saved bytes", async () => {
+  const directory = root();
+  const service = await startNative({
+    profile: directory,
+    enginePath:
+      process.env.TWIN_ENGINE_PATH ??
+      resolve("build", process.platform === "win32" ? "twin-engine.exe" : "twin-engine"),
+    staticRoot: resolve("hmi"),
+    version: "1.1.0",
+    source: "a".repeat(40),
+    sourceDirty: true,
+    stop() {},
+  });
+  running.push(service);
+  const headers = { host: new URL(service.origin).host, "x-twin-session": service.token };
+  const trace = {
+    traceVersion: 1,
+    scope: "simulated-heated-tank",
+    capacity: 1200,
+    dropped: 0,
+    snapshots: [service.engine.latest()],
+  };
+  for (let index = 0; index < 12; index += 1)
+    expect(
+      (
+        await service.server.inject({
+          method: "POST",
+          url: "/desktop/trace",
+          headers,
+          payload: trace,
+        })
+      ).statusCode,
+    ).toBe(200);
+  const original = readFileSync(join(directory, "review-trace.json"));
+  const denied = await service.server.inject({
+    method: "POST",
+    url: "/desktop/trace",
+    headers,
+    payload: { traceVersion: 999 },
+  });
+  expect(denied.statusCode).toBe(429);
+  expect(Number(denied.headers["retry-after"])).toBeGreaterThan(0);
+  expect(Number(denied.headers["retry-after"])).toBeLessThanOrEqual(60);
+  expect(readFileSync(join(directory, "review-trace.json"))).toEqual(original);
+  for (let index = 0; index < 30; index += 1)
+    expect((await service.server.inject({ url: "/desktop/trace", headers })).statusCode).toBe(200);
+  expect((await service.server.inject({ url: "/desktop/trace", headers })).statusCode).toBe(429);
+});

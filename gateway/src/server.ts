@@ -67,7 +67,7 @@ export async function createServer(
   engine: EnginePort,
   publisher: TelemetryPublisher,
   serveStatic = true,
-  configure?: (server: FastifyInstance) => void,
+  configure?: (server: FastifyInstance) => void | Promise<void>,
 ): Promise<FastifyInstance> {
   const server = Fastify({
     bodyLimit: 16_384,
@@ -75,7 +75,7 @@ export async function createServer(
     logger: false,
     trustProxy: false,
   });
-  configure?.(server);
+  await configure?.(server);
   const clients = new Set<ServerResponse>();
 
   server.addHook("onSend", async (_request, reply) => {

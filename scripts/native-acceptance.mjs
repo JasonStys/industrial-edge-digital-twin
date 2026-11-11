@@ -145,6 +145,15 @@ try {
     ).status(),
   ).toBe(400);
   expect(await readFile(join(profile, "review-trace.json"))).toEqual(bytes);
+  // One accepted UI save and one invalid API save already consumed two of twelve writes.
+  for (let index = 0; index < 10; index += 1)
+    expect(
+      (await probe(page, ready, "/desktop/trace", { method: "POST", data: trace })).status(),
+    ).toBe(200);
+  await page.locator("#native-save-trace").click();
+  await expect(page.locator("#native-status")).toContainText("Too many workspace requests");
+  expect(await readFile(join(profile, "review-trace.json"))).toEqual(bytes);
+  receipt.stages.push("actual-native-trace-quota-refusal-preserved-evidence");
   await page.locator("#trace-import").setInputFiles({
     name: "invalid-trace.json",
     mimeType: "application/json",
