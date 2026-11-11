@@ -4,3 +4,8 @@ hmi/dist/
 node_modules/
 reports/coverage/
 pnpm-lock.yaml
+.runtime/
+release/
+artifacts/
+desktop/dist/
+test-results/

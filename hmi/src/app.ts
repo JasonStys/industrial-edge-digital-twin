@@ -27,6 +27,96 @@ let reviewIndex: number | undefined;
 let playback: ReturnType<typeof setInterval> | undefined;
 let traceOperation = 0;
 
+/** Enable durable workflow only after the actual owned native service validates this window. */
+async function initializeNativeWorkspace(): Promise<void> {
+  if (window.location.hash !== "#native") return;
+  const response = await fetch("/desktop/info");
+  if (!response.ok) return;
+  const info = (await response.json()) as { version: string; savedTrace: boolean };
+  element("native-workspace").removeAttribute("hidden");
+  text("native-version", `Application ${info.version} · local C++ simulation · Jason Stys`);
+  commandToken = "native-managed-session";
+  element<HTMLFormElement>("access-form").hidden = true;
+  text(
+    "command-status",
+    "Native session is managed by this application; no shared password is used.",
+  );
+  text(
+    "native-status",
+    info.savedTrace
+      ? "A saved review recording is available."
+      : "No saved review yet. Record a short simulation first.",
+  );
+}
+
+/** Keep errors visible and preserve the previous saved review when validation fails. */
+async function nativeAction(operation: () => Promise<string>): Promise<void> {
+  try {
+    text("native-status", await operation());
+  } catch (error) {
+    text(
+      "native-status",
+      error instanceof Error
+        ? error.message
+        : "Operation refused or unavailable. Existing saved targets and recording were preserved.",
+    );
+  }
+}
+
+/** Explain bounded native request refusals without exposing server internals. */
+function requireNativeResponse(response: Response): void {
+  if (response.status === 429)
+    throw new Error(
+      "Too many workspace requests. Wait one minute and try again; saved data is unchanged.",
+    );
+  if (!response.ok)
+    throw new Error("Workspace operation refused. Existing saved data was preserved.");
+}
+
+element("native-save-targets").addEventListener("click", () => {
+  void nativeAction(async () => {
+    const response = await fetch("/desktop/targets", { method: "POST" });
+    requireNativeResponse(response);
+    return "Saved current targets. The next launch will start stopped with those targets.";
+  });
+});
+element("native-save-trace").addEventListener("click", () => {
+  void nativeAction(async () => {
+    if (recording === undefined || recorder.active)
+      throw new Error("Stop and review a recording first");
+    const response = await fetch("/desktop/trace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: serializeTrace(recording),
+    });
+    requireNativeResponse(response);
+    return `Saved ${recording.snapshots.length} validated review samples. This does not resume simulation state.`;
+  });
+});
+element("native-load-trace").addEventListener("click", () => {
+  void nativeAction(async () => {
+    if (recorder.active) throw new Error("Stop recording before loading");
+    const response = await fetch("/desktop/trace");
+    requireNativeResponse(response);
+    const imported = parseTrace(await response.text());
+    pausePlayback();
+    recording = imported;
+    recordingOrigin = "saved local review, not authenticated";
+    recordingStatus();
+    showRecorded(0);
+    return `Loaded ${imported.snapshots.length} saved samples in read-only review.`;
+  });
+});
+element("native-quit").addEventListener("click", () => {
+  void nativeAction(async () => {
+    const response = await fetch("/desktop/quit", { method: "POST" });
+    if (!response.ok || ((await response.json()) as { stopping?: boolean }).stopping !== true)
+      throw new Error("Quit not acknowledged");
+    return "Closing the owned simulation service safely.";
+  });
+});
+void initializeNativeWorkspace().catch(() => undefined);
+
 /** Return a required DOM element or fail early with an actionable developer error. */
 function element<T extends Element = HTMLElement>(id: string): T {
   const match = document.querySelector<T>(`#${id}`);

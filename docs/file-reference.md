@@ -1,5 +1,21 @@
 # File reference
 
+## Native application additions
+
+| File                                            | Responsibility                                                                                             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `desktop/main.mjs`                              | Owns one sandboxed native HMI, per-profile exclusion, exact-origin session injection and orderly shutdown. |
+| `desktop/src/runtime.ts`                        | Reuses the real C++ gateway, enforces local session/Origin, and bounds durable target/trace files.         |
+| `desktop/tsconfig.json`                         | Compiles only native runtime and its actual shared source imports.                                         |
+| `desktop/test/runtime.test.ts`                  | Exercises private files, real kernel commands, malformed-state preservation and native APIs.               |
+| `desktop/test/tsconfig.json`                    | Strictly checks native test/runtime TypeScript.                                                            |
+| `electron-builder.config.cjs`                   | Bundles locked Electron, actual static kernel, HMI and source metadata.                                    |
+| `scripts/build-native.ps1`                      | Builds and tests a fresh Windows portable candidate.                                                       |
+| `scripts/native-acceptance.mjs`                 | Tests actual packaged HMI, targets, faults, review, persistence and process exit.                          |
+| `.github/workflows/native-app.yml`              | Builds/tests Windows artifacts with read-only repository permissions; does not publish.                    |
+| `docs/native-application.md`                    | Explains actual user workflow, data lifecycle and trust boundaries.                                        |
+| `docs/reports/native-application-2026-11-10.md` | Records observed native evidence and remaining publication/install limits.                                 |
+
 Every source file starts with a purpose header. C++ classes/functions and TypeScript/JavaScript
 interfaces/functions receive local API comments. Exact declaration lines are regenerated in the
 [symbol index](generated/symbol-index.md), avoiding stale hand-maintained line numbers.

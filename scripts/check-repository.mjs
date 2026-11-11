@@ -19,8 +19,12 @@ const skippedDirectories = new Set([
   "dist",
   "node_modules",
   "reports",
+  ".runtime",
+  "release",
+  "artifacts",
+  "test-results",
 ]);
-const codeExtensions = new Set([".cpp", ".hpp", ".html", ".js", ".mjs", ".ts"]);
+const codeExtensions = new Set([".cpp", ".hpp", ".html", ".js", ".mjs", ".cjs", ".ts"]);
 
 /** Walk repository files while excluding generated dependencies and build output. */
 async function walk(directory) {

@@ -1,5 +1,15 @@
 # Industrial Edge Digital Twin
 
+## Native simulation application
+
+The 1.1.0 Windows candidate bundles the existing C++ engine, gateway and full HMI in a real
+sandboxed application window. Change targets, inject simulated faults, record and inspect traces,
+save a read-only review, and reopen with retained target settings. Each launch starts stopped; saved
+traces never replay commands. Users need no compiler, Node, Docker or shared password. See the
+[application guide](docs/native-application.md) and
+[native validation](docs/reports/native-application-2026-11-10.md). It is an unsigned portable
+candidate; publication, installation and desktop shortcuts are tracked separately.
+
 A deterministic heated-tank simulator that makes timing, units, interlocks, signal quality, command
 idempotency, and injected failures visible. The repository pairs a C++20 process and controller
 engine with a strict-TypeScript edge gateway, an optional MQTT v5 publisher, and a responsive

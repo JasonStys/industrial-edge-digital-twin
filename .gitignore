@@ -16,3 +16,7 @@ playwright-report/
 reports/coverage/
 test-results/
 *.log
+.runtime/
+release/
+artifacts/
+desktop/dist/
