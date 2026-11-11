@@ -322,6 +322,32 @@
         </p>
       </section>
 
+      <section id="native-workspace" class="engineering-note" hidden aria-labelledby="native-title">
+        <p class="eyebrow">PRIVATE LOCAL APPLICATION</p>
+        <h2 id="native-title">Durable simulation workspace</h2>
+        <p id="native-version"></p>
+        <details open>
+          <summary>First-use help and saved data</summary>
+          <p>
+            Use the same live simulator above: change targets, choose automatic/manual mode and
+            inject a fault. Start and stop a recording, then inspect its samples and export its
+            JSON. Save targets and the reviewed recording explicitly below. Every new launch starts
+            stopped; saved traces are review-only and do not send commands. MQTT and external
+            hardware are disabled in this application.
+          </p>
+          <p>
+            Targets and one bounded2MiB trace persist in your OS-local application profile, separate
+            from installed files. This is a single-user educational simulation, without cloud
+            accounts or device authorization. Use Application → Quit to stop the service and its C++
+            engine.
+          </p>
+        </details>
+        <button id="native-save-targets" type="button">Save current targets</button>
+        <button id="native-save-trace" type="button">Save reviewed recording</button>
+        <button id="native-load-trace" type="button">Load saved recording</button>
+        <button id="native-quit" type="button">Quit application</button>
+        <p id="native-status" role="status" aria-live="polite"></p>
+      </section>
       <section class="engineering-note" aria-labelledby="boundary-title">
         <p class="eyebrow">MODEL BOUNDARY</p>
         <h2 id="boundary-title">This is an educational simulator.</h2>

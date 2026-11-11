@@ -1,9 +1,12 @@
 allowBuilds:
   # Vite's pinned transpiler installs its platform-specific executable.
+  # Squirrel.Windows is unused; the candidate uses a portable directory target.
+  electron-winstaller: false
   esbuild: true
 minimumReleaseAgeExclude:
   - fastify@5.12.5
   - mqtt@5.16.0
   - prettier@3.9.7
+  - electron@44.11.0
 overrides:
   "minimatch@>=7 <11.0.1": "11.0.1"

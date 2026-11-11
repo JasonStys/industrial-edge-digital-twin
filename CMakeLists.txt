@@ -3,7 +3,7 @@
 # Symbol locations: docs/generated/symbol-index.md records code symbols; this declarative file is indexed by section.
 
 cmake_minimum_required(VERSION 3.25)
-project(industrial_edge_digital_twin VERSION 1.0.0 LANGUAGES CXX)
+project(industrial_edge_digital_twin VERSION 1.1.0 LANGUAGES CXX)
 
 option(EDGE_TWIN_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 option(EDGE_TWIN_ENABLE_COVERAGE "Enable GCC/Clang coverage instrumentation" OFF)

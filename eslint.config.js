@@ -16,6 +16,10 @@ export default tseslint.config(
       "hmi/dist/**",
       "node_modules/**",
       "reports/**",
+      ".runtime/**",
+      "release/**",
+      "artifacts/**",
+      "desktop/dist/**",
     ],
   },
   eslint.configs.recommended,
@@ -37,7 +41,17 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.js", "**/*.mjs"],
+    files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
     ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      globals: {
+        require: "readonly",
+        module: "readonly",
+        process: "readonly",
+        __dirname: "readonly",
+        URL: "readonly",
+        console: "readonly",
+      },
+    },
   },
 );

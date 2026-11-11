@@ -8,7 +8,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["gateway/test/**/*.test.ts", "hmi/test/**/*.test.ts"],
+    include: ["gateway/test/**/*.test.ts", "hmi/test/**/*.test.ts", "desktop/test/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "html"],

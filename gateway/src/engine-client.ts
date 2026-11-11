@@ -100,6 +100,11 @@ export class EngineClient implements EnginePort {
     return this.#latest;
   }
 
+  /** Expose only the supervised child identity for native lifecycle acceptance. */
+  processId(): number | undefined {
+    return this.#child?.pid;
+  }
+
   diagnostics(): EngineDiagnostics {
     return {
       droppedTicks: this.#droppedTicks,

@@ -1,6 +1,9 @@
 {
   "name": "industrial-edge-digital-twin",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "author": {
+    "name": "Jason Stys"
+  },
   "private": true,
   "description": "Deterministic heated-tank digital twin with a C++ engine, typed edge gateway, MQTT telemetry, and accessible HMI.",
   "type": "module",
@@ -25,8 +28,9 @@
     "test": "vitest run --coverage",
     "test:repository": "node --test scripts/repository-reader.test.mjs",
     "test:e2e": "pnpm run build && node scripts/run-e2e.mjs",
-    "typecheck": "tsc -p gateway/tsconfig.json --noEmit && tsc -p gateway/test/tsconfig.json --noEmit && tsc -p hmi/tsconfig.json --noEmit && tsc -p hmi/test/tsconfig.json --noEmit && tsc -p tsconfig.json --noEmit",
-    "validate:web": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:repository && pnpm build && pnpm symbols:check && pnpm repository:check"
+    "typecheck": "tsc -p gateway/tsconfig.json --noEmit && tsc -p gateway/test/tsconfig.json --noEmit && tsc -p hmi/tsconfig.json --noEmit && tsc -p hmi/test/tsconfig.json --noEmit && tsc -p tsconfig.json --noEmit && tsc -p desktop/test/tsconfig.json && tsc -p desktop/tsconfig.json --noEmit",
+    "validate:web": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:repository && pnpm build && pnpm symbols:check && pnpm repository:check",
+    "build:native-runtime": "tsc -p desktop/tsconfig.json"
   },
   "dependencies": {
     "@fastify/static": "10.1.10",
@@ -41,6 +45,8 @@
     "@types/node": "22.20.5",
     "@vitest/coverage-v8": "5.0.5",
     "cross-env": "10.1.0",
+    "electron": "44.11.0",
+    "electron-builder": "26.18.0",
     "eslint": "10.12.0",
     "prettier": "3.9.10",
     "tsx": "4.23.15",

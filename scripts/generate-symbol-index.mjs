@@ -12,8 +12,16 @@ import { format as formatText } from "prettier";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const outputPath = path.join(repositoryRoot, "docs", "generated", "symbol-index.md");
-const includedExtensions = new Set([".cpp", ".hpp", ".js", ".mjs", ".ts"]);
-const skippedDirectories = new Set(["build", "build-release", "dist", "node_modules", "reports"]);
+const includedExtensions = new Set([".cpp", ".hpp", ".js", ".mjs", ".cjs", ".ts", ".ps1"]);
+const skippedDirectories = new Set([
+  "build",
+  "build-release",
+  "dist",
+  "node_modules",
+  "reports",
+  "release",
+  "artifacts",
+]);
 
 /** Recursively find version-controlled source candidates in stable lexical order. */
 async function discover(directory) {
@@ -32,6 +40,8 @@ async function discover(directory) {
 function symbolsFor(source) {
   const symbols = [];
   const patterns = [
+    /^\s*function\s+([A-Za-z_][\w-]*)/,
+    /^\s*\$([A-Za-z_][\w]*)\s*=/,
     /\b(?:class|struct|enum(?:\s+class)?|interface|type)\s+([A-Za-z_][A-Za-z0-9_]*)/,
     /\b(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/,
     /\b(?:export\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)/,
